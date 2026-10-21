@@ -1,0 +1,16 @@
+{
+  "name": "scintilla-renderer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "The aura renderer web bundle, extracted from PAWOI and built to a single self-contained HTML file for react-native-webview.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "vite": "^8.3.2"
+  }
+}

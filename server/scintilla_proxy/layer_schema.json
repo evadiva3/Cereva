@@ -1,0 +1,1458 @@
+{
+  "_comment": "GENERATED FILE. Do not edit by hand. Source of truth is packages/aura-schema/src/fieldSpecs.ts. Regenerate with: npm run schema:export",
+  "schemaVersion": 1,
+  "layerOrder": [
+    "visual_snow",
+    "eye_floaters",
+    "geometric_aura",
+    "fortification_spectra",
+    "photopsia_flashes",
+    "phosphene_burst",
+    "scotoma",
+    "migrating_scotoma",
+    "color_distortion",
+    "text_blur",
+    "lexical_distortion",
+    "alice_in_wonderland",
+    "metamorphopsia",
+    "edge_glow",
+    "photophobia",
+    "hemianopia_mask",
+    "tunnel_vision",
+    "retinal_afterimage",
+    "palinopsia",
+    "afterimage_trail",
+    "oscillopsia"
+  ],
+  "layerLabels": {
+    "visual_snow": "Visual Snow",
+    "geometric_aura": "Geometric Auras",
+    "scotoma": "Scotomas",
+    "color_distortion": "Color Distortion",
+    "palinopsia": "Afterimages / Palinopsia",
+    "photophobia": "Photophobia",
+    "fortification_spectra": "Fortification Spectra",
+    "afterimage_trail": "Afterimage Trails",
+    "tunnel_vision": "Tunnel Vision",
+    "oscillopsia": "Oscillopsia",
+    "photopsia_flashes": "Photopsia Flashes",
+    "text_blur": "Text Blur",
+    "eye_floaters": "Eye Floaters",
+    "edge_glow": "Edge Glow",
+    "alice_in_wonderland": "Alice in Wonderland",
+    "metamorphopsia": "Metamorphopsia",
+    "phosphene_burst": "Phosphene Bursts",
+    "hemianopia_mask": "Hemianopia",
+    "lexical_distortion": "Lexical Distortion",
+    "migrating_scotoma": "Migrating Scotomas",
+    "retinal_afterimage": "Retinal Afterimages"
+  },
+  "layerCategories": [
+    {
+      "label": "Snow & Static",
+      "types": [
+        "visual_snow",
+        "eye_floaters"
+      ]
+    },
+    {
+      "label": "Aura & Geometry",
+      "types": [
+        "geometric_aura",
+        "fortification_spectra",
+        "photopsia_flashes",
+        "phosphene_burst"
+      ]
+    },
+    {
+      "label": "Field Effects",
+      "types": [
+        "scotoma",
+        "migrating_scotoma",
+        "color_distortion",
+        "text_blur",
+        "lexical_distortion",
+        "alice_in_wonderland",
+        "metamorphopsia",
+        "edge_glow",
+        "photophobia",
+        "hemianopia_mask",
+        "tunnel_vision"
+      ]
+    },
+    {
+      "label": "Motion & Temporal",
+      "types": [
+        "retinal_afterimage",
+        "palinopsia",
+        "afterimage_trail",
+        "oscillopsia"
+      ]
+    }
+  ],
+  "safetyCaps": [
+    {
+      "layer": "photopsia_flashes",
+      "field": "flashes_per_minute",
+      "max": 180,
+      "why": "180 per minute is 3 Hz, well below the 15 to 25 Hz photosensitive band"
+    },
+    {
+      "layer": "phosphene_burst",
+      "field": "burst_rate_per_minute",
+      "max": 60,
+      "why": "60 per minute is 1 Hz"
+    },
+    {
+      "layer": "oscillopsia",
+      "field": "frequency_hz",
+      "max": 10,
+      "why": "capped below the photosensitive flicker band"
+    }
+  ],
+  "layers": {
+    "visual_snow": {
+      "density": {
+        "kind": "number",
+        "min": 100,
+        "max": 20000,
+        "default": 3000,
+        "label": "Density",
+        "int": true,
+        "hint": "spatial coverage"
+      },
+      "brightness": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Brightness"
+      },
+      "color_temperature": {
+        "kind": "enum",
+        "values": [
+          "warm",
+          "cool",
+          "neutral"
+        ],
+        "default": "neutral",
+        "label": "Color temperature"
+      },
+      "flicker_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 5,
+        "default": 1,
+        "label": "Flicker speed",
+        "hint": "0 freezes the field"
+      },
+      "particle_size": {
+        "kind": "number",
+        "min": 0.5,
+        "max": 4,
+        "default": 1,
+        "label": "Grain size",
+        "unit": "px"
+      },
+      "intensity": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.8,
+        "label": "Intensity",
+        "hint": "contrast around brightness"
+      },
+      "color_noise": {
+        "kind": "bool",
+        "default": false,
+        "label": "Colored static",
+        "hint": "independent red, green and blue flicker"
+      },
+      "churn": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "label": "Churn",
+        "hint": "how much of the field re-randomizes per frame"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "rainbow cycles one hue continuously over time"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "eye_floaters": {
+      "variant": {
+        "kind": "enum",
+        "values": [
+          "opaque",
+          "translucent"
+        ],
+        "default": "opaque",
+        "label": "Variant"
+      },
+      "count": {
+        "kind": "number",
+        "min": 1,
+        "max": 20,
+        "default": 6,
+        "label": "Count",
+        "int": true
+      },
+      "drift_speed": {
+        "kind": "number",
+        "min": 0.1,
+        "max": 2,
+        "default": 0.3,
+        "label": "Drift speed"
+      },
+      "drift_pattern": {
+        "kind": "enum",
+        "values": [
+          "gravity",
+          "random_walk",
+          "eye_movement_responsive"
+        ],
+        "default": "gravity",
+        "label": "Drift pattern"
+      },
+      "size_variance": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Size variance"
+      },
+      "color": {
+        "kind": "color",
+        "default": "#2a2a2a",
+        "label": "Color",
+        "hint": "opaque variant only"
+      },
+      "custom_shapes": {
+        "kind": "polylines",
+        "minPoints": 8,
+        "maxPoints": 14,
+        "maxShapes": 20,
+        "label": "Drawn shapes",
+        "hint": "user-drawn floater spines, normalized 0 to 1; leave empty for procedural shapes"
+      },
+      "use_custom_shapes": {
+        "kind": "bool",
+        "default": false,
+        "label": "Use drawn shapes"
+      }
+    },
+    "geometric_aura": {
+      "shapes": {
+        "kind": "list",
+        "minItems": 0,
+        "maxItems": 12,
+        "of": {
+          "shape_type": {
+            "kind": "enum",
+            "values": [
+              "zigzag",
+              "fortification",
+              "spiral",
+              "arc",
+              "expanding_ring"
+            ],
+            "default": "fortification",
+            "label": "Shape type",
+            "hint": "legacy, ignored by the renderer"
+          },
+          "x": {
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.35,
+            "label": "Horizontal position"
+          },
+          "y": {
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.45,
+            "label": "Vertical position"
+          },
+          "size": {
+            "kind": "number",
+            "min": 0.01,
+            "max": 1,
+            "default": 0.2,
+            "label": "Size",
+            "hint": "fraction of the shorter edge"
+          },
+          "animation_speed": {
+            "kind": "number",
+            "min": 0,
+            "max": 5,
+            "default": 1,
+            "label": "Animation speed"
+          },
+          "color": {
+            "kind": "color",
+            "default": "#ffd700",
+            "label": "Color",
+            "hint": "legacy, ignored by the renderer"
+          },
+          "opacity": {
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.8,
+            "label": "Opacity"
+          }
+        },
+        "default": [
+          {
+            "shape_type": "fortification",
+            "x": 0.35,
+            "y": 0.45,
+            "size": 0.2,
+            "animation_speed": 1,
+            "color": "#ffd700",
+            "opacity": 0.8
+          }
+        ],
+        "label": "Shapes"
+      },
+      "internal_shimmer": {
+        "kind": "bool",
+        "default": false,
+        "label": "Internal shimmer",
+        "hint": "legacy, superseded by Shimmer"
+      },
+      "asymmetry": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "label": "Asymmetry",
+        "hint": "0 is circular, 1 is a strong crescent"
+      },
+      "asymmetry_angle": {
+        "kind": "number",
+        "min": 0,
+        "max": 360,
+        "default": 0,
+        "label": "Asymmetry angle",
+        "unit": "degrees"
+      },
+      "inner_color": {
+        "kind": "color",
+        "default": "#ffffff",
+        "label": "Inner color"
+      },
+      "outer_color": {
+        "kind": "color",
+        "default": "#a0c0ff",
+        "label": "Outer color"
+      },
+      "shimmer": {
+        "kind": "bool",
+        "default": true,
+        "label": "Shimmer",
+        "hint": "scintillation over the field"
+      },
+      "brightness": {
+        "kind": "number",
+        "min": 0.1,
+        "max": 1,
+        "default": 0.65,
+        "label": "Brightness"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow",
+          "spectrum"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "spectrum is a static prismatic band along the edge, all colors at once, no animation"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "fortification_spectra": {
+      "origin_x": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Origin horizontal"
+      },
+      "origin_y": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Origin vertical"
+      },
+      "expansion_rate": {
+        "kind": "number",
+        "min": 0.1,
+        "max": 200,
+        "default": 2,
+        "label": "Expansion rate",
+        "unit": "px per second"
+      },
+      "arc_angle_degrees": {
+        "kind": "number",
+        "min": 10,
+        "max": 360,
+        "default": 120,
+        "label": "Arc angle",
+        "unit": "degrees"
+      },
+      "zigzag_amplitude": {
+        "kind": "number",
+        "min": 1,
+        "max": 100,
+        "default": 14,
+        "label": "Zigzag amplitude",
+        "unit": "px"
+      },
+      "zigzag_frequency": {
+        "kind": "number",
+        "min": 0.5,
+        "max": 30,
+        "default": 6,
+        "label": "Zigzag frequency",
+        "unit": "cycles per 100px"
+      },
+      "color": {
+        "kind": "color",
+        "default": "#ffd700",
+        "label": "Color"
+      },
+      "cycle_duration_seconds": {
+        "kind": "number",
+        "min": 10,
+        "max": 7200,
+        "default": 1200,
+        "label": "Cycle length",
+        "unit": "seconds"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "rainbow cycles one hue continuously over time"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "photopsia_flashes": {
+      "flash_points": {
+        "kind": "list",
+        "minItems": 0,
+        "maxItems": 20,
+        "of": {
+          "x": {
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.5,
+            "label": "Horizontal position"
+          },
+          "y": {
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.5,
+            "label": "Vertical position"
+          }
+        },
+        "default": [
+          {
+            "x": 0.25,
+            "y": 0.3
+          },
+          {
+            "x": 0.75,
+            "y": 0.65
+          }
+        ],
+        "label": "Flash points"
+      },
+      "flash_duration_ms": {
+        "kind": "number",
+        "min": 20,
+        "max": 2000,
+        "default": 120,
+        "label": "Flash duration",
+        "unit": "ms"
+      },
+      "flashes_per_minute": {
+        "kind": "number",
+        "min": 0,
+        "max": 180,
+        "default": 20,
+        "label": "Flash rate",
+        "unit": "per minute",
+        "hint": "hard safety cap at 180, which is 3 Hz"
+      },
+      "flash_color": {
+        "kind": "color",
+        "default": "#ffffff",
+        "label": "Flash color"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "rainbow cycles one hue continuously over time"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "phosphene_burst": {
+      "burst_rate_per_minute": {
+        "kind": "number",
+        "min": 0,
+        "max": 60,
+        "default": 10,
+        "label": "Burst rate",
+        "unit": "per minute",
+        "hint": "hard safety cap at 60, which is 1 Hz"
+      },
+      "shape_type": {
+        "kind": "enum",
+        "values": [
+          "star",
+          "ring",
+          "ray_burst",
+          "random"
+        ],
+        "default": "random",
+        "label": "Shape"
+      },
+      "color": {
+        "kind": "color",
+        "default": "#ffffff",
+        "label": "Color"
+      },
+      "size_px": {
+        "kind": "number",
+        "min": 10,
+        "max": 200,
+        "default": 60,
+        "label": "Size",
+        "unit": "px"
+      }
+    },
+    "scotoma": {
+      "scotomas": {
+        "kind": "list",
+        "minItems": 0,
+        "maxItems": 12,
+        "of": {
+          "x": {
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.6,
+            "label": "Horizontal position"
+          },
+          "y": {
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.4,
+            "label": "Vertical position"
+          },
+          "size": {
+            "kind": "number",
+            "min": 0.01,
+            "max": 1,
+            "default": 0.1,
+            "label": "Size"
+          },
+          "shape": {
+            "kind": "enum",
+            "values": [
+              "circular",
+              "irregular"
+            ],
+            "default": "circular",
+            "label": "Shape"
+          },
+          "opacity": {
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.7,
+            "label": "Opacity"
+          },
+          "edge_softness": {
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "default": 0.5,
+            "label": "Edge softness",
+            "hint": "legacy, superseded by the layer-level edge softness in px"
+          },
+          "seed": {
+            "kind": "number",
+            "min": 0,
+            "max": 2147483647,
+            "default": 1,
+            "label": "Seed",
+            "int": true,
+            "hint": "reproduces the exact irregular outline on replay"
+          }
+        },
+        "default": [
+          {
+            "x": 0.6,
+            "y": 0.4,
+            "size": 0.1,
+            "shape": "circular",
+            "opacity": 0.7,
+            "edge_softness": 0.5,
+            "seed": 1
+          }
+        ],
+        "label": "Scotomas"
+      },
+      "fill_color": {
+        "kind": "color",
+        "default": "#12080e",
+        "label": "Fill color"
+      },
+      "border_color": {
+        "kind": "color",
+        "default": "#2a1535",
+        "label": "Border color"
+      },
+      "edge_softness_px": {
+        "kind": "number",
+        "min": 20,
+        "max": 65,
+        "default": 45,
+        "label": "Edge softness",
+        "unit": "px"
+      },
+      "seamless": {
+        "kind": "bool",
+        "default": false,
+        "label": "Seamless",
+        "hint": "no identifiable boundary; overrides edge softness"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow",
+          "spectrum"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "spectrum is a static prismatic band along the edge, all colors at once, no animation"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "migrating_scotoma": {
+      "dot_count": {
+        "kind": "number",
+        "min": 1,
+        "max": 12,
+        "default": 3,
+        "label": "Count",
+        "int": true
+      },
+      "dot_size_px": {
+        "kind": "number",
+        "min": 4,
+        "max": 60,
+        "default": 18,
+        "label": "Size",
+        "unit": "px radius"
+      },
+      "fill_color": {
+        "kind": "color",
+        "default": "#0a0510",
+        "label": "Fill color"
+      },
+      "opacity": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.85,
+        "label": "Opacity"
+      },
+      "edge_softness_px": {
+        "kind": "number",
+        "min": 0,
+        "max": 60,
+        "default": 8,
+        "label": "Edge softness",
+        "unit": "px"
+      },
+      "path_type": {
+        "kind": "enum",
+        "values": [
+          "drift",
+          "orbit",
+          "erratic",
+          "crawl",
+          "swarm"
+        ],
+        "default": "drift",
+        "label": "Path"
+      },
+      "speed": {
+        "kind": "number",
+        "min": 0.1,
+        "max": 2,
+        "default": 0.5,
+        "label": "Speed",
+        "hint": "crawl caps at 0.15 internally"
+      },
+      "drift_angle": {
+        "kind": "number",
+        "min": 0,
+        "max": 360,
+        "default": 45,
+        "label": "Drift heading",
+        "unit": "degrees"
+      },
+      "orbit_radius_percent": {
+        "kind": "number",
+        "min": 1,
+        "max": 100,
+        "default": 30,
+        "label": "Orbit radius",
+        "unit": "% of shorter edge"
+      }
+    },
+    "color_distortion": {
+      "hue_shift": {
+        "kind": "number",
+        "min": -180,
+        "max": 180,
+        "default": 0,
+        "label": "Hue shift",
+        "unit": "degrees"
+      },
+      "saturation_boost": {
+        "kind": "number",
+        "min": 0,
+        "max": 3,
+        "default": 1,
+        "label": "Saturation",
+        "hint": "1 is unchanged"
+      },
+      "contrast": {
+        "kind": "number",
+        "min": 0.2,
+        "max": 3,
+        "default": 1,
+        "label": "Contrast",
+        "hint": "1 is unchanged"
+      },
+      "pattern": {
+        "kind": "enum",
+        "values": [
+          "uniform",
+          "pulsing",
+          "quadrant"
+        ],
+        "default": "uniform",
+        "label": "Pattern"
+      },
+      "pulse_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 5,
+        "default": 1,
+        "label": "Pulse speed",
+        "hint": "used when pattern is pulsing"
+      },
+      "quadrant": {
+        "kind": "enum",
+        "values": [
+          "top_left",
+          "top_right",
+          "bottom_left",
+          "bottom_right"
+        ],
+        "default": "top_left",
+        "label": "Quadrant",
+        "hint": "used when pattern is quadrant"
+      }
+    },
+    "text_blur": {
+      "blur_type": {
+        "kind": "enum",
+        "values": [
+          "gaussian",
+          "motion",
+          "radial"
+        ],
+        "default": "gaussian",
+        "label": "Blur type"
+      },
+      "blur_radius_px": {
+        "kind": "number",
+        "min": 0.5,
+        "max": 20,
+        "default": 4,
+        "label": "Blur radius",
+        "unit": "px"
+      },
+      "coverage": {
+        "kind": "enum",
+        "values": [
+          "global",
+          "patch"
+        ],
+        "default": "global",
+        "label": "Coverage"
+      },
+      "patch_x": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Patch horizontal"
+      },
+      "patch_y": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Patch vertical"
+      },
+      "patch_radius_percent": {
+        "kind": "number",
+        "min": 1,
+        "max": 100,
+        "default": 20,
+        "label": "Patch radius",
+        "unit": "% of width"
+      },
+      "pulse": {
+        "kind": "bool",
+        "default": false,
+        "label": "Pulse"
+      },
+      "pulse_frequency_hz": {
+        "kind": "number",
+        "min": 0.05,
+        "max": 5,
+        "default": 0.5,
+        "label": "Pulse frequency",
+        "unit": "Hz"
+      }
+    },
+    "lexical_distortion": {
+      "words_per_second": {
+        "kind": "number",
+        "min": 0.1,
+        "max": 10,
+        "default": 1.5,
+        "label": "Activation rate",
+        "unit": "words per second"
+      },
+      "color_palette": {
+        "kind": "enum",
+        "values": [
+          "random",
+          "warm",
+          "cool",
+          "spectrum"
+        ],
+        "default": "random",
+        "label": "Palette"
+      },
+      "highlight_mode": {
+        "kind": "enum",
+        "values": [
+          "color",
+          "highlight",
+          "both"
+        ],
+        "default": "color",
+        "label": "Highlight mode",
+        "hint": "legacy, superseded by Text mode"
+      },
+      "text_mode": {
+        "kind": "enum",
+        "values": [
+          "color_only",
+          "highlight",
+          "both"
+        ],
+        "default": "color_only",
+        "label": "Text mode"
+      },
+      "duration_ms": {
+        "kind": "number",
+        "min": 100,
+        "max": 5000,
+        "default": 800,
+        "label": "Duration",
+        "unit": "ms"
+      },
+      "intensity": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.7,
+        "label": "Intensity"
+      },
+      "simultaneous_words": {
+        "kind": "number",
+        "min": 1,
+        "max": 10,
+        "default": 3,
+        "label": "Words at once",
+        "int": true
+      }
+    },
+    "alice_in_wonderland": {
+      "center_x": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Center horizontal"
+      },
+      "center_y": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Center vertical"
+      },
+      "radius_percent": {
+        "kind": "number",
+        "min": 2,
+        "max": 60,
+        "default": 22,
+        "label": "Radius",
+        "unit": "% of shorter edge"
+      },
+      "distortion_type": {
+        "kind": "enum",
+        "values": [
+          "micropsia",
+          "macropsia"
+        ],
+        "default": "macropsia",
+        "label": "Distortion"
+      },
+      "intensity": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Intensity",
+        "hint": "1 is about 1.8 times"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow",
+          "spectrum"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "spectrum is a static prismatic band along the edge, all colors at once, no animation"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "metamorphopsia": {
+      "wave_amplitude_px": {
+        "kind": "number",
+        "min": 0.5,
+        "max": 30,
+        "default": 6,
+        "label": "Wave amplitude",
+        "unit": "px"
+      },
+      "wave_frequency": {
+        "kind": "number",
+        "min": 0.5,
+        "max": 12,
+        "default": 3,
+        "label": "Wave frequency",
+        "unit": "cycles"
+      },
+      "coverage": {
+        "kind": "enum",
+        "values": [
+          "global",
+          "patch"
+        ],
+        "default": "patch",
+        "label": "Coverage"
+      },
+      "patch_x": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Patch horizontal"
+      },
+      "patch_y": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Patch vertical"
+      },
+      "patch_radius_percent": {
+        "kind": "number",
+        "min": 1,
+        "max": 100,
+        "default": 25,
+        "label": "Patch radius",
+        "unit": "% of width"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow",
+          "spectrum"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "spectrum is a static prismatic band along the edge, all colors at once, no animation"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "edge_glow": {
+      "detection_threshold": {
+        "kind": "number",
+        "min": 0,
+        "max": 255,
+        "default": 30,
+        "label": "Edge sensitivity",
+        "int": true,
+        "hint": "lower finds more edges"
+      },
+      "glow_color": {
+        "kind": "color",
+        "default": "#ffffff",
+        "label": "Glow color"
+      },
+      "glow_width_px": {
+        "kind": "number",
+        "min": 1,
+        "max": 40,
+        "default": 8,
+        "label": "Glow width",
+        "unit": "px"
+      },
+      "glow_opacity": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.6,
+        "label": "Glow opacity"
+      },
+      "chromatic_aberration": {
+        "kind": "bool",
+        "default": true,
+        "label": "Prismatic fringe"
+      },
+      "aberration_offset_px": {
+        "kind": "number",
+        "min": 0,
+        "max": 12,
+        "default": 3,
+        "label": "Fringe offset",
+        "unit": "px"
+      },
+      "pulse": {
+        "kind": "bool",
+        "default": false,
+        "label": "Pulse"
+      },
+      "pulse_frequency_hz": {
+        "kind": "number",
+        "min": 0.05,
+        "max": 5,
+        "default": 0.5,
+        "label": "Pulse frequency",
+        "unit": "Hz"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow",
+          "spectrum"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "spectrum is a static prismatic band along the edge, all colors at once, no animation"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "photophobia": {
+      "luminance_reduction": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.3,
+        "label": "Dimming"
+      },
+      "glare_intensity": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Glare intensity"
+      },
+      "glare_radius": {
+        "kind": "number",
+        "min": 0,
+        "max": 0.5,
+        "default": 0.1,
+        "label": "Glare spread",
+        "unit": "fraction of shorter edge"
+      }
+    },
+    "hemianopia_mask": {
+      "side": {
+        "kind": "enum",
+        "values": [
+          "left",
+          "right"
+        ],
+        "default": "left",
+        "label": "Side lost"
+      },
+      "edge_softness_px": {
+        "kind": "number",
+        "min": 0,
+        "max": 40,
+        "default": 20,
+        "label": "Edge softness",
+        "unit": "px",
+        "hint": "the boundary never renders narrower than 8px"
+      },
+      "fill_opacity": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.6,
+        "label": "Fill opacity",
+        "hint": "above 0.7 switches from a desaturated ghost of the scene to a dark fill"
+      },
+      "edge_color": {
+        "kind": "color",
+        "default": "#c9c2ec",
+        "label": "Boundary color"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow",
+          "spectrum"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "spectrum is a static prismatic band along the edge, all colors at once, no animation"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "tunnel_vision": {
+      "radius_percent": {
+        "kind": "number",
+        "min": 0,
+        "max": 100,
+        "default": 60,
+        "label": "Remaining field",
+        "unit": "% of radius"
+      },
+      "edge_softness_px": {
+        "kind": "number",
+        "min": 0,
+        "max": 600,
+        "default": 80,
+        "label": "Edge softness",
+        "unit": "px"
+      },
+      "fill_style": {
+        "kind": "enum",
+        "values": [
+          "black",
+          "blur"
+        ],
+        "default": "black",
+        "label": "Lost field"
+      },
+      "color_mode": {
+        "kind": "enum",
+        "values": [
+          "fixed",
+          "rainbow",
+          "spectrum"
+        ],
+        "default": "fixed",
+        "label": "Color mode",
+        "hint": "spectrum is a static prismatic band along the edge, all colors at once, no animation"
+      },
+      "rainbow_cycle_speed": {
+        "kind": "number",
+        "min": 0,
+        "max": 30,
+        "default": 1,
+        "label": "Rainbow speed",
+        "unit": "cycles per minute"
+      }
+    },
+    "retinal_afterimage": {
+      "trigger_mode": {
+        "kind": "enum",
+        "values": [
+          "ambient",
+          "gaze",
+          "both"
+        ],
+        "default": "ambient",
+        "label": "Trigger"
+      },
+      "spawn_rate_per_minute": {
+        "kind": "number",
+        "min": 1,
+        "max": 30,
+        "default": 8,
+        "label": "Spawn rate",
+        "unit": "per minute"
+      },
+      "gaze_dwell_ms": {
+        "kind": "number",
+        "min": 300,
+        "max": 5000,
+        "default": 1500,
+        "label": "Gaze dwell",
+        "unit": "ms"
+      },
+      "gaze_trigger_radius_px": {
+        "kind": "number",
+        "min": 10,
+        "max": 120,
+        "default": 40,
+        "label": "Gaze radius",
+        "unit": "px"
+      },
+      "blob_count_max": {
+        "kind": "number",
+        "min": 1,
+        "max": 10,
+        "default": 4,
+        "label": "Max at once",
+        "int": true
+      },
+      "blob_size_px": {
+        "kind": "number",
+        "min": 20,
+        "max": 150,
+        "default": 60,
+        "label": "Size",
+        "unit": "px radius"
+      },
+      "hold_duration_ms": {
+        "kind": "number",
+        "min": 200,
+        "max": 10000,
+        "default": 2000,
+        "label": "Hold",
+        "unit": "ms"
+      },
+      "fade_duration_ms": {
+        "kind": "number",
+        "min": 200,
+        "max": 10000,
+        "default": 3000,
+        "label": "Fade",
+        "unit": "ms"
+      },
+      "blob_softness": {
+        "kind": "number",
+        "min": 5,
+        "max": 60,
+        "default": 30,
+        "label": "Edge softness",
+        "unit": "px"
+      }
+    },
+    "palinopsia": {
+      "trail_length": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Trail length"
+      },
+      "decay_speed": {
+        "kind": "number",
+        "min": 0.1,
+        "max": 5,
+        "default": 1,
+        "label": "Decay speed"
+      },
+      "opacity": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.5,
+        "label": "Opacity",
+        "hint": "starting opacity of a fresh ghost"
+      }
+    },
+    "afterimage_trail": {
+      "trail_length_frames": {
+        "kind": "number",
+        "min": 1,
+        "max": 60,
+        "default": 8,
+        "label": "Trail length",
+        "int": true,
+        "unit": "frames"
+      },
+      "decay_curve": {
+        "kind": "enum",
+        "values": [
+          "linear",
+          "exponential"
+        ],
+        "default": "exponential",
+        "label": "Decay curve"
+      },
+      "opacity_start": {
+        "kind": "number",
+        "min": 0,
+        "max": 1,
+        "default": 0.6,
+        "label": "Starting opacity"
+      },
+      "triggers_on": {
+        "kind": "enum",
+        "values": [
+          "motion",
+          "always"
+        ],
+        "default": "motion",
+        "label": "Triggers on"
+      }
+    },
+    "oscillopsia": {
+      "amplitude_px": {
+        "kind": "number",
+        "min": 0,
+        "max": 120,
+        "default": 6,
+        "label": "Amplitude",
+        "unit": "px"
+      },
+      "frequency_hz": {
+        "kind": "number",
+        "min": 0,
+        "max": 10,
+        "default": 2,
+        "label": "Frequency",
+        "unit": "Hz",
+        "hint": "hard safety cap at 10 Hz, below the photosensitive band"
+      },
+      "motion_type": {
+        "kind": "enum",
+        "values": [
+          "horizontal",
+          "vertical",
+          "rotational",
+          "combined"
+        ],
+        "default": "horizontal",
+        "label": "Motion"
+      }
+    }
+  }
+}

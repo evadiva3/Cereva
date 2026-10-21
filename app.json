@@ -1,0 +1,70 @@
+{
+  "expo": {
+    "name": "Scintilla",
+    "slug": "scintilla",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "scintilla",
+    "userInterfaceStyle": "dark",
+    "platforms": [
+      "ios"
+    ],
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.scintilla.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Scintilla shows your aura over the live camera so you can let someone else look through your eyes. Camera images are never saved or sent anywhere.",
+        "NSPhotoLibraryUsageDescription": "Choose a photo to show your aura over. Photos stay on this device.",
+        "NSMotionUsageDescription": "Device motion drives the drifting and trailing parts of your aura when nobody is touching the screen.",
+        "UIViewControllerBasedStatusBarAppearance": false,
+        "NSHealthShareUsageDescription": "Scintilla reads your sleep, step count, and cycle if you log it, so it can look for patterns alongside your migraine days. It only reads, never writes, and this data never leaves your phone.",
+        "NSLocationWhenInUseUsageDescription": "Scintilla uses a rough idea of your location to look up air pressure and weather, which are possible migraine factors. The location is rounded before it is used and is never stored.",
+        "NSMicrophoneUsageDescription": "Record a short voice note during an attack, when typing is hard. Voice notes stay on your phone."
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Scintilla shows your aura over the live camera so you can let someone else look through your eyes."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a photo to show your aura over. Photos stay on this device."
+        }
+      ],
+      "expo-sqlite",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#09090c",
+          "imageWidth": 160
+        }
+      ],
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Scintilla reads your sleep, step count, and cycle if you log it, so it can look for patterns alongside your migraine days. Read only.",
+          "NSHealthUpdateUsageDescription": false,
+          "background": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Scintilla uses a rough idea of your location to look up air pressure and weather, which are possible migraine factors.",
+          "locationAlwaysAndWhenInUsePermission": "Scintilla uses a rough idea of your location to look up air pressure and weather, which are possible migraine factors. It only asks while you are using it.",
+          "locationAlwaysPermission": "Scintilla uses a rough idea of your location to look up air pressure and weather, which are possible migraine factors. It only asks while you are using it."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

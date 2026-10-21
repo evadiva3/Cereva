@@ -1,0 +1,5 @@
+anthropic==1.11.0
+fastapi==0.142.2
+pydantic==2.13.5
+uvicorn[standard]==0.54.0
+slowapi==0.1.10

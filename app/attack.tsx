@@ -15,6 +15,7 @@ export default function AttackScreen(){
 useKeepAwake();
 const [attack, setAttack]=useState<Attack | null>(null);
 const [error, setError]=useState<string | null>(null);
+const [ended, setEnded]=useState(false);
 const prevBright=useRef<number | null>(null);
 
 useEffect(() => {
@@ -64,7 +65,7 @@ const finish=useCallback(() => {
 if(!attack) return;
 void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 endAttack(attack.id)
-.then(() => router.back())
+.then(() => setEnded(true))
 .catch((err: Error) => setError(err.message));
 }, [attack]);
 
@@ -73,6 +74,22 @@ return (
 <View style={styles.root}>
 <Text style={styles.error}>{error}</Text>
 <BigButton label="Close" onPress={() => router.back()} />
+</View>
+);
+}
+
+if(ended){
+return (
+<View style={styles.root}>
+<Text style={styles.heading} maxFontSizeMultiplier={1.6}>
+That one is over
+</Text>
+<Text style={styles.subheading} maxFontSizeMultiplier={1.6}>
+It is logged. Add anything you want to remember, or leave it. Nothing
+here is required, and you can come back to it later.
+</Text>
+<BigButton label="Say what it was like" onPress={() => router.replace("/voice")} />
+<BigButton label="Nothing to add" onPress={() => router.back()} />
 </View>
 );
 }

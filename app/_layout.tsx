@@ -21,7 +21,7 @@ getDb().catch((err: Error) => setDbError(err.message));
 if(dbError){
 return (
 <View style={styles.fatal}>
-<Text style={styles.fatalTitle}>Scintilla could not open its database</Text>
+<Text style={styles.fatalTitle}>Cereva could not open its database</Text>
 <Text style={styles.fatalBody}>{dbError}</Text>
 </View>
 );
@@ -45,9 +45,14 @@ contentStyle: { backgroundColor: colors.canvas },
 name="show"
 options={{ headerShown: false, animation: "fade", presentation: "fullScreenModal" }}
 />
+<Stack.Screen name="relaxation-player" options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }} />
 <Stack.Screen name="checkin" options={{ title: "Today", presentation: "modal" }} />
 <Stack.Screen
-name="loosen-player"
+name="voice"
+options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }}
+/>
+<Stack.Screen
+name="muscle-relaxation"
 options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade" }}
 />
 <Stack.Screen

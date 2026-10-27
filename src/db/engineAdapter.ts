@@ -25,6 +25,8 @@ temp_change: number | null;
 humidity: number | null;
 }
 
+const HEADACHE_VALUES: Record<string, number>={ none: 0, mild: 1, moderate: 2, severe: 3 };
+
 const STRESS_VALUES: Record<string, number>={ low: 0, medium: 1, high: 2 };
 
 export async function buildEngineInput(windowDays = DEFAULT_WINDOW_DAYS): Promise<DayRecord[]> {
@@ -86,6 +88,7 @@ return {
 date,
 logged: !!log || attackFromRecord,
 attack: attackFromLog || attackFromRecord,
+severity: log ? (HEADACHE_VALUES[log.headache] ?? null) : null,
 alcohol: log ? log.alcohol === 1 : null,
 caffeineChange: log ? log.caffeine_change === 1 : null,
 skippedMeal: log ? log.skipped_meal === 1 : null,
@@ -99,10 +102,6 @@ humidity: p?.humidity ?? null,
 loosenSession: loosenSet.has(date),
 };
 });
-}
-
-export function spanInDays(days: DayRecord[]): number {
-return days.length;
 }
 
 export async function saveEngineRun(

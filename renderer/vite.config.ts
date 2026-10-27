@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from "vite";
 
 function inlineEverything(): Plugin {
 return {
-name: "scintilla-inline-everything",
+name: "cereva-inline-everything",
 enforce: "post",
 generateBundle(_options, bundle){
 const htmlKey=Object.keys(bundle).find((k) => k.endsWith(".html"));

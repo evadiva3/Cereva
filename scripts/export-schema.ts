@@ -14,7 +14,7 @@ SAFETY_CAPS,
 } from "../packages/aura-schema/src/index";
 
 const ROOT=join(dirname(fileURLToPath(import.meta.url)), "..");
-const OUT=join(ROOT, "server", "scintilla_proxy", "layer_schema.json");
+const OUT=join(ROOT, "server", "cereva_proxy", "layer_schema.json");
 
 const payload={
 _comment:

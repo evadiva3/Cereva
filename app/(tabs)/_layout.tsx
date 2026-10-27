@@ -22,7 +22,7 @@ return (
 style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
 onPress={() => {
 void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-router.push("/attack");
+router.push("/voice");
 }}
 accessibilityRole="button"
 accessibilityLabel="Record a migraine attack starting now"
@@ -65,8 +65,8 @@ name="insights"
 options={{ title: "Insights", tabBarIcon: icon("stats-chart-outline") }}
 />
 <Tabs.Screen
-name="loosen"
-options={{ title: "Loosen", tabBarIcon: icon("leaf-outline") }}
+name="relaxation"
+options={{ title: "Relaxation", tabBarIcon: icon("leaf-outline") }}
 />
 <Tabs.Screen name="settings" options={{ title: "Settings", href: null }} />
 </Tabs>

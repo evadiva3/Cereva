@@ -12,8 +12,10 @@ LONG_SESSION_UNLOCK_AFTER,
 type ReEntryChoice,
 } from "../../packages/loosen/src/schedule";
 import { loosenOverview, savePlan, type LoosenOverview } from "@/db/loosenSessions";
+import { PracticeLibrary } from "@/relaxation/PracticeLibrary";
+import { PeekCard } from "@/mascot/PeekCard";
 import { SCREEN_LOCK_NOTE } from "@/loosen/narrator";
-import { colors, radius, space, touch, type as typeScale } from "@/theme";
+import { cardDepth, colors, radius, space, touch, type as typeScale } from "@/theme";
 
 export default function LoosenScreen(){
 const [overview, setOverview]=useState<LoosenOverview | null>(null);
@@ -63,7 +65,11 @@ const { thisWeek, plan, reEntry, longUnlocked, completedShortSessions }=overview
 
 return (
 <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+<PeekCard size={136} mood="idle">
 <View style={styles.weekCard}>
+<View style={styles.weekIntro}>
+<View style={styles.weekCopy}>
+<Text style={styles.weekNote}>Muscle relaxation this week</Text>
 <Text style={styles.weekLabel} maxFontSizeMultiplier={2}>
 {thisWeek.label}
 </Text>
@@ -78,6 +84,12 @@ A heavy week. This one is not counted either way.
 </Text>
 ) : null}
 </View>
+
+</View>
+</View>
+</PeekCard>
+
+<PracticeLibrary />
 
 {reEntry.needed ? (
 <View style={styles.reEntryCard}>
@@ -161,15 +173,15 @@ After {plan.cue}, my {Math.round(plan.sessionSeconds / 60)} minutes.
 </View>
 
 <Text style={styles.sectionHeading} maxFontSizeMultiplier={2}>
-Start
+Muscle relaxation
 </Text>
 
 <SessionButton
-label="Five minutes"
+label="Release tension · 5 minutes"
 hint="Six muscle groups."
 onPress={() =>
 router.push({
-pathname: "/loosen-player",
+pathname: "/muscle-relaxation",
 params: { seconds: String(DEFAULT_SESSION_SECONDS) },
 })
 }
@@ -177,11 +189,11 @@ params: { seconds: String(DEFAULT_SESSION_SECONDS) },
 
 {longUnlocked ? (
 <SessionButton
-label="Fifteen minutes"
+label="Deeper release · 15 minutes"
 hint="Twelve groups, with longer pauses."
 onPress={() =>
 router.push({
-pathname: "/loosen-player",
+pathname: "/muscle-relaxation",
 params: { seconds: String(LONG_SESSION_SECONDS) },
 })
 }
@@ -267,11 +279,13 @@ center: { flex: 1, backgroundColor: colors.canvas, alignItems: "center", justify
 muted: { color: colors.textMuted, fontSize: typeScale.body },
 pressed: { opacity: 0.7 },
 
-weekCard: { padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.surface, gap: space.xs },
+weekIntro: { flexDirection: "row", alignItems: "center", gap: space.md },
+weekCopy: { flex: 1, gap: space.xs },
+weekCard: { ...cardDepth, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.surface, gap: space.xs },
 weekLabel: { color: colors.text, fontSize: typeScale.title },
 weekNote: { color: colors.textMuted, fontSize: typeScale.caption },
 
-reEntryCard: {
+reEntryCard: { ...cardDepth,
 padding: space.lg,
 borderRadius: radius.lg,
 backgroundColor: colors.surface,
@@ -328,7 +342,7 @@ backgroundColor: colors.surfaceRaised,
 },
 smallButtonText: { color: colors.text, fontSize: typeScale.label },
 
-sessionButton: {
+sessionButton: { ...cardDepth,
 minHeight: 80,
 justifyContent: "center",
 padding: space.lg,
@@ -338,7 +352,7 @@ backgroundColor: colors.surfaceRaised,
 sessionLabel: { color: colors.text, fontSize: typeScale.heading },
 sessionHint: { color: colors.textFaint, fontSize: typeScale.caption, marginTop: 2 },
 
-lockedCard: { padding: space.lg, borderRadius: radius.md, backgroundColor: colors.surface },
+lockedCard: { ...cardDepth, padding: space.lg, borderRadius: radius.md, backgroundColor: colors.surface },
 lockedText: { color: colors.textFaint, fontSize: typeScale.caption },
 
 footnote: {

@@ -11,6 +11,7 @@ return {
 date: "2025-01-01",
 logged: true,
 attack: false,
+severity: 0,
 alcohol: false,
 caffeineChange: false,
 skippedMeal: false,
@@ -308,7 +309,7 @@ it("is deterministic: the same diary gives the same answer", () => {
 const { days }=simulateUser({
 days: 365,
 baseAttackRate: 0.13,
-trigger: { factor: "alcohol", oddsRatio: 3, lag: 1 },
+trigger: { factor: "sleep_short", oddsRatio: 3, lag: 1 },
 logProbability: 0.85,
 seed: 12,
 });
@@ -363,11 +364,11 @@ for(let s = 0; s < 40; s++){
 const { days }=simulateUser({
 days: 730,
 baseAttackRate: 0.13,
-trigger: { factor: "alcohol", oddsRatio: 5, lag: 1 },
+trigger: { factor: "sleep_short", oddsRatio: 5, lag: 1 },
 logProbability: 0.85,
 seed: 20_000 + s,
 });
-const res=runEngine(days).results.find((r) => r.factor === "alcohol")!;
+const res=runEngine(days).results.find((r) => r.factor === "sleep_short")!;
 if(res.label === "linked_more") found++;
 }
 expect(found).toBeGreaterThan(30);

@@ -19,6 +19,7 @@ ai_draft_json: string | null;
 ai_model: string | null;
 ai_warnings_json: string | null;
 thumbnail_path: string | null;
+source_attack_id:string | null;
 }
 
 export interface AuraVersion {
@@ -27,6 +28,7 @@ name: string;
 createdAt: string;
 state: AuraState;
 thumbnailPath: string | null;
+sourceAttackId:string | null;
 provenance: {
 sourceText: string;
 aiDraft: unknown;
@@ -37,6 +39,7 @@ loadWarnings: Warning[];
 }
 
 export interface SaveAuraInput {
+sourceAttackId?:string | null;
 name: string;
 state: AuraState;
 thumbnailPath?: string | null;
@@ -67,8 +70,8 @@ const name=input.name.trim() || "Untitled";
 await db.runAsync(
 `INSERT INTO aura_versions
        (id, name, created_at, schema_version, state_json, background_type,
-        source_text, ai_draft_json, ai_model, ai_warnings_json, thumbnail_path)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        source_text, ai_draft_json, ai_model, ai_warnings_json, thumbnail_path, source_attack_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 id,
 name,
 createdAt,
@@ -80,6 +83,7 @@ input.provenance ? JSON.stringify(input.provenance.aiDraft) : null,
 input.provenance?.model ?? null,
 input.provenance ? JSON.stringify(input.provenance.warnings) : null,
 input.thumbnailPath ?? null,
+input.sourceAttackId ?? null,
 );
 
 return {
@@ -88,6 +92,7 @@ name,
 createdAt,
 state,
 thumbnailPath: input.thumbnailPath ?? null,
+sourceAttackId:input.sourceAttackId ?? null,
 provenance: input.provenance ?? null,
 loadWarnings: [],
 };
@@ -124,6 +129,7 @@ name: row.name,
 createdAt: row.created_at,
 state,
 thumbnailPath: row.thumbnail_path,
+sourceAttackId:row.source_attack_id ?? null,
 provenance,
 loadWarnings: warnings,
 };
@@ -145,15 +151,6 @@ const row=await db.getFirstAsync<AuraVersionRow>(
 id,
 );
 return row ? hydrate(row) : null;
-}
-
-export async function renameAuraVersion(id: string, name: string): Promise<void> {
-const db=await getDb();
-await db.runAsync(
-`UPDATE aura_versions SET name = ? WHERE id = ?`,
-name.trim() || "Untitled",
-id,
-);
 }
 
 export async function deleteAuraVersion(id: string): Promise<string | null> {

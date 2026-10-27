@@ -10,7 +10,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY scintilla_proxy ./scintilla_proxy
+COPY cereva_proxy ./cereva_proxy
 
 USER 65534:65534
 
@@ -18,7 +18,7 @@ EXPOSE 8000
 
 ENV FORWARDED_ALLOW_IPS=127.0.0.1
 
-CMD ["sh", "-c", "exec uvicorn scintilla_proxy.main:app \
+CMD ["sh", "-c", "exec uvicorn cereva_proxy.main:app \
      --host 0.0.0.0 --port 8000 \
      --no-access-log --proxy-headers \
      --forwarded-allow-ips \"$FORWARDED_ALLOW_IPS\""]

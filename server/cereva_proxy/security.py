@@ -9,10 +9,10 @@ from starlette.responses import JSONResponse, Response
 
 MAX_BODY_BYTES=64 * 1024
 
-CLIENT_TOKEN_HEADER="x-scintilla-client"
+CLIENT_TOKEN_HEADER="x-cereva-client"
 
 def _expected_token() -> str | None:
- token=os.environ.get("SCINTILLA_CLIENT_TOKEN", "").strip()
+ token=os.environ.get("CEREVA_CLIENT_TOKEN", "").strip()
  return token or None
 
 async def require_client_token(request: Request) -> None:
@@ -68,22 +68,23 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
   response.headers["Referrer-Policy"] = "no-referrer"
   response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
   response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-  response.headers["Server"] = "scintilla"
+  response.headers["Server"] = "cereva"
   return response
 
 def startup_warnings() -> list[str]:
  warnings: list[str]=[]
  if _expected_token() is None:
   warnings.append(
-   "SCINTILLA_CLIENT_TOKEN is not set. Anyone who finds this URL can "
+   "CEREVA_CLIENT_TOKEN is not set. Anyone who finds this URL can "
    "spend the model budget. Set it, and set a spending cap with the "
    "model provider as well."
   )
- if not os.environ.get("ANTHROPIC_API_KEY"):
+ backend=os.environ.get("CEREVA_BACKEND_DESCRIBE", "auto").strip().lower()
+ if backend == "anthropic" and not os.environ.get("ANTHROPIC_API_KEY"):
   warnings.append("ANTHROPIC_API_KEY is not set. Draft requests will fail.")
- if os.environ.get("SCINTILLA_DOCS"):
+ if os.environ.get("CEREVA_DOCS"):
   warnings.append(
-   "SCINTILLA_DOCS is set, so the interactive docs are exposed. "
+   "CEREVA_DOCS is set, so the interactive docs are exposed. "
    "Do not do this in production."
   )
  if os.environ.get("FORWARDED_ALLOW_IPS", "").strip() == "*":

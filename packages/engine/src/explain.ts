@@ -93,8 +93,9 @@ return (
 `${when} goes with ${direction} attacks${unit}. ` +
 `The odds ratio is ${fmt(strongest.oddsRatio)}, somewhere between ` +
 `${fmt(strongest.lower)} and ${fmt(strongest.upper)}. ` +
-`This is based on ${result.counts.onsets} attack starts across ` +
-`${result.counts.observedDays} days.`
+`This is based on ${result.counts.onsets} ${
+result.continuousMode ? "days it got worse" : "attack starts"
+} across ${result.counts.observedDays} days.`
 );
 }
 
@@ -104,6 +105,8 @@ case "too_few_days":
 return `There are ${result.counts.observedDays} usable days for it so far.`;
 case "too_few_onsets":
 return `There have been ${result.counts.onsets} attack starts so far.`;
+case "too_few_worsenings":
+return `There have been ${result.counts.onsets} days it clearly got worse so far.`;
 case "too_few_exposed":
 return `It has only come up on ${result.counts.exposedDays} days.`;
 case "too_few_unexposed":

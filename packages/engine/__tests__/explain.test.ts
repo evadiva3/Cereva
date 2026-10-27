@@ -14,7 +14,7 @@ function outputWithFinding(): EngineOutput {
 const { days }=simulateUser({
 days: 730,
 baseAttackRate: 0.13,
-trigger: { factor: "alcohol", oddsRatio: 5, lag: 1 },
+trigger: { factor: "sleep_short", oddsRatio: 5, lag: 1 },
 logProbability: 0.85,
 seed: 4242,
 });
@@ -32,7 +32,7 @@ const allowed=allowedNumbers(output);
 const result=output.results.find((r) => r.label === "linked_more")!;
 const lag=result.lags[1]!;
 const text =
-`Alcohol the day before goes with more attacks. The odds ratio is ` +
+`Short sleep the night before goes with more attacks. The odds ratio is ` +
 `${lag.oddsRatio.toFixed(2)}, between ${lag.lower.toFixed(2)} and ` +
 `${lag.upper.toFixed(2)}, across ${result.counts.onsets} attack starts.`;
 expect(findInventedNumbers(text, allowed)).toEqual([]);
@@ -162,6 +162,7 @@ lags: [],
 rawP: 0.4,
 adjustedP: 1,
 perStandardDeviation: false,
+continuousMode: false,
 };
 expect(explainFactor(result).toLowerCase()).toContain("not the same as ruling it out");
 });

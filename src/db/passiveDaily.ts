@@ -20,41 +20,6 @@ weatherSource: SourceFlag;
 fetchedAt: string | null;
 }
 
-interface PassiveRow {
-local_date: string;
-sleep_minutes: number | null;
-steps: number | null;
-cycle_phase: string | null;
-menstrual_flow: string | null;
-pressure_msl: number | null;
-pressure_surface: number | null;
-pressure_change: number | null;
-temp_mean: number | null;
-temp_change: number | null;
-humidity: number | null;
-health_source: SourceFlag;
-weather_source: SourceFlag;
-fetched_at: string | null;
-}
-
-function hydrate(row: PassiveRow): PassiveDay {
-return {
-localDate: row.local_date,
-sleepMinutes: row.sleep_minutes,
-steps: row.steps,
-cyclePhase: row.cycle_phase,
-menstrualFlow: row.menstrual_flow,
-pressureMsl: row.pressure_msl,
-pressureSurface: row.pressure_surface,
-pressureChange: row.pressure_change,
-tempMean: row.temp_mean,
-tempChange: row.temp_change,
-humidity: row.humidity,
-healthSource: row.health_source,
-weatherSource: row.weather_source,
-fetchedAt: row.fetched_at,
-};
-}
 
 export interface HealthValues {
 sleepMinutes: number | null;
@@ -148,25 +113,6 @@ await db.execAsync(`
                FROM ordered o WHERE o.local_date = passive_daily.local_date
            )
   `);
-}
-
-export async function getPassiveDay(date: string): Promise<PassiveDay | null> {
-const db=await getDb();
-const row=await db.getFirstAsync<PassiveRow>(
-"SELECT * FROM passive_daily WHERE local_date = ?",
-date,
-);
-return row ? hydrate(row) : null;
-}
-
-export async function listPassiveDays(start: string, end: string): Promise<PassiveDay[]> {
-const db=await getDb();
-const rows=await db.getAllAsync<PassiveRow>(
-"SELECT * FROM passive_daily WHERE local_date BETWEEN ? AND ? ORDER BY local_date",
-start,
-end,
-);
-return rows.map(hydrate);
 }
 
 export async function datesMissingWeather(dates: string[]): Promise<string[]> {

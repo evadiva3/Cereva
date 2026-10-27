@@ -95,6 +95,20 @@ backfilled,
 return { ...input, loggedAt, backfilled: !!backfilled };
 }
 
+export async function quickMark(date: string, headache: Headache): Promise<DayLog> {
+const existing=await getDayLog(date);
+return saveDayLog({
+localDate: date,
+headache,
+attackDay: existing?.attackDay ?? headache === "severe",
+acuteMed: existing?.acuteMed ?? false,
+alcohol: existing?.alcohol ?? false,
+caffeineChange: existing?.caffeineChange ?? false,
+skippedMeal: existing?.skippedMeal ?? false,
+stress: existing?.stress ?? null,
+});
+}
+
 export async function getDayLog(date: string): Promise<DayLog | null> {
 const db=await getDb();
 const row=await db.getFirstAsync<DayLogRow>(
@@ -126,14 +140,4 @@ await db.runAsync(
 date,
 now,
 );
-}
-
-export async function loggedDayCount(days: number): Promise<{ logged: number; of: number }> {
-const db=await getDb();
-const row=await db.getFirstAsync<{ n: number }>(
-`SELECT COUNT(*) AS n FROM day_logs
-      WHERE local_date >= date('now', 'localtime', ?)`,
-`-${days - 1} days`,
-);
-return { logged: row?.n ?? 0, of: days };
 }

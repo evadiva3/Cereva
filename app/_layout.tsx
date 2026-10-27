@@ -15,7 +15,20 @@ const [dbError, setDbError]=useState<string | null>(null);
 
 useEffect(() => {
 void SystemUI.setBackgroundColorAsync(colors.canvas);
-getDb().catch((err: Error) => setDbError(err.message));
+getDb()
+.then(async db => {
+const seedMode=process.env.EXPO_PUBLIC_SEED_ON_LAUNCH;
+if(seedMode === "1" || seedMode === "force"){
+if(seedMode !== "force"){
+const existing=await db.getFirstAsync("SELECT 1 FROM day_logs UNION ALL SELECT 1 FROM attacks LIMIT 1");
+if(existing) return;
+}
+const { seedChronic }=await import("@/dev/seed");
+const r=await seedChronic(180);
+console.log("SEEDED", JSON.stringify(r));
+}
+})
+.catch((err: Error) => setDbError(err.message));
 }, []);
 
 if(dbError){

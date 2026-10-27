@@ -5,7 +5,7 @@ import math
 
 import pytest
 
-from scintilla_proxy.schema import (
+from cereva_proxy.schema import (
  LAYERS,
  LAYER_ORDER,
  SAFETY_CAPS,

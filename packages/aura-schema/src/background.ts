@@ -11,13 +11,6 @@ background_type: "neutral",
 photo_uri: null,
 };
 
-export const BACKGROUND_LABELS: Record<BackgroundType, string>={
-neutral: "Dark field",
-photo: "Your photo",
-camera: "Live camera",
-reading_passage: "Reading page",
-};
-
 export function neutralBackground(): BackgroundConfig {
 return { background_type: "neutral", photo_uri: null };
 }

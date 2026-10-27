@@ -1,5 +1,5 @@
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useRef } from "react";
 import {
 AccessibilityInfo,
 Pressable,
@@ -58,6 +58,8 @@ onChange: (v: number) => void;
 }
 
 const NumberControl=memo(function NumberControl({ spec, value, onChange }: NumberControlProps){
+const track=useRef<View>(null);
+const geometry=useRef({ x:0, width:1 });
 const step=stepFor(spec);
 const clamp=(v: number) => Math.min(spec.max, Math.max(spec.min, v));
 const fraction=(value - spec.min) / (spec.max - spec.min || 1);
@@ -73,27 +75,21 @@ onChange(next);
 );
 
 const label=`${spec.label}, ${formatValue(spec, value)}`;
+const drag=(pageX: number) => {
+const fraction=Math.min(1,Math.max(0,(pageX-geometry.current.x)/geometry.current.width));
+const raw=spec.min+fraction*(spec.max-spec.min);
+onChange(spec.int ? Math.round(raw) : Math.round(raw*1000)/1000);
+};
 
 return (
 <Row label={spec.label} hint={spec.hint}>
 <View style={styles.sliderRow}>
-<Pressable
-onPress={() => nudge(-1)}
-disabled={value <= spec.min}
-style={({ pressed }) => [
-styles.nudge,
-pressed && styles.nudgePressed,
-value <= spec.min && styles.nudgeDisabled,
-]}
-accessibilityRole="button"
-accessibilityLabel={`Decrease ${spec.label}`}
-hitSlop={6}
->
-<Text style={styles.nudgeGlyph}>-</Text>
-</Pressable>
-
-<View
+<View ref={track}
 style={styles.track}
+onStartShouldSetResponder={() => true}
+onMoveShouldSetResponder={() => true}
+onResponderGrant={event => { const x=event.nativeEvent.pageX; track.current?.measureInWindow((left,_top,width) => { geometry.current={x:left,width:Math.max(1,width)}; drag(x); }); }}
+onResponderMove={event => drag(event.nativeEvent.pageX)}
 accessible
 accessibilityRole="adjustable"
 accessibilityLabel={label}
@@ -108,27 +104,15 @@ onAccessibilityAction={(e) => {
 nudge(e.nativeEvent.actionName === "increment" ? 1 : -1);
 }}
 >
-<View style={[styles.trackFill, { width: `${Math.round(fraction * 100)}%` }]} />
+<View pointerEvents="none" style={styles.rail} />
+<View pointerEvents="none" style={[styles.trackFill, { width: `${Math.round(fraction * 100)}%` }]} />
 <View
 style={[styles.thumb, { left: `${Math.round(fraction * 100)}%` }]}
 pointerEvents="none"
 />
 </View>
 
-<Pressable
-onPress={() => nudge(1)}
-disabled={value >= spec.max}
-style={({ pressed }) => [
-styles.nudge,
-pressed && styles.nudgePressed,
-value >= spec.max && styles.nudgeDisabled,
-]}
-accessibilityRole="button"
-accessibilityLabel={`Increase ${spec.label}`}
-hitSlop={6}
->
-<Text style={styles.nudgeGlyph}>+</Text>
-</Pressable>
+
 </View>
 <Text style={styles.value} maxFontSizeMultiplier={2}>
 {formatValue(spec, value)}
@@ -335,11 +319,10 @@ nudgeGlyph: { color: colors.text, fontSize: typeScale.title, lineHeight: typeSca
 
 track: {
 flex: 1,
-height: 8,
-borderRadius: radius.pill,
-backgroundColor: colors.line,
+height: 44,
 justifyContent: "center",
 },
+rail: { position: "absolute", left: 0, right: 0, height: 8, borderRadius: radius.pill, backgroundColor: colors.line },
 trackFill: {
 position: "absolute",
 left: 0,

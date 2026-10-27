@@ -11,7 +11,12 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-from .claude import ModelRefusedError, ModelUnavailableError, draft_from_description
+from .backends import (
+ ModelRefusedError,
+ ModelUnavailableError,
+ describe_backend_name,
+ draft_from_description,
+)
 from .schema import SCHEMA_VERSION, normalize_aura_state
 from .security import (
  BodySizeLimitMiddleware,
@@ -21,21 +26,21 @@ from .security import (
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
-log=logging.getLogger("scintilla.proxy")
+log=logging.getLogger("cereva.proxy")
 
-RATE_LIMIT=os.environ.get("SCINTILLA_RATE_LIMIT", "10/minute")
-DAILY_LIMIT=os.environ.get("SCINTILLA_DAILY_LIMIT", "100/day")
+RATE_LIMIT=os.environ.get("CEREVA_RATE_LIMIT", "10/minute")
+DAILY_LIMIT=os.environ.get("CEREVA_DAILY_LIMIT", "100/day")
 
 limiter=Limiter(key_func=get_remote_address, default_limits=[DAILY_LIMIT])
 
 app=FastAPI(
- title="Scintilla AI proxy",
+ title="Cereva AI proxy",
  version="1.0.0",
  description=(
   "Turns a description of a migraine aura into a draft configuration. "
   "Holds the model API key so the app does not have to. Logs no content."
  ),
- docs_url="/docs" if os.environ.get("SCINTILLA_DOCS") else None,
+ docs_url="/docs" if os.environ.get("CEREVA_DOCS") else None,
  redoc_url=None,
 )
 app.state.limiter=limiter
@@ -45,6 +50,8 @@ app.add_middleware(BodySizeLimitMiddleware)
 
 for _warning in startup_warnings():
  log.warning("STARTUP: %s", _warning)
+
+log.info("STARTUP: describe backend=%s", describe_backend_name())
 
 class DescribeRequest(BaseModel):
 

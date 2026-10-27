@@ -9,7 +9,7 @@ Text,
 TextInput,
 View,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 
 import { LAYER_LABELS, type Warning } from "@aura/schema";
@@ -24,6 +24,7 @@ notableWarnings,
 type DraftOutcome,
 } from "@/ai/client";
 import { AI_CONSENT_COPY, getAiConsent, setAiConsent } from "@/ai/consent";
+import { getAttack } from "@/db/attacks";
 import { saveAuraVersion } from "@/db/auraVersions";
 import { AURA_DISCLAIMER, colors, radius, space, touch, type as typeScale } from "@/theme";
 
@@ -37,17 +38,35 @@ const EXAMPLES=[
 
 export default function DescribeScreen(){
 const auraRef=useRef<AuraViewHandle>(null);
+const {attackId}=useLocalSearchParams<{attackId?:string}>();
+const [sourceAttackId,setSourceAttackId]=useState<string | null>(null);
 const [stage, setStage]=useState<Stage>("loading");
 const [description, setDescription]=useState("");
 const [outcome, setOutcome]=useState<DraftOutcome | null>(null);
 const [error, setError]=useState<string | null>(null);
 const [busy, setBusy]=useState(false);
+const [secs, setSecs]=useState(0);
 
 useEffect(() => {
-getAiConsent()
-.then((consent) => setStage(consent.granted ? "writing" : "consent"))
-.catch(() => setStage("consent"));
-}, []);
+if(stage !== "working"){ setSecs(0); return; }
+const t0=Date.now();
+const id=setInterval(() => setSecs(Math.floor((Date.now()-t0)/1000)), 1000);
+return () => clearInterval(id);
+}, [stage]);
+
+useEffect(() => {
+let alive=true;
+Promise.all([getAiConsent(),attackId ? getAttack(attackId) : Promise.resolve(null)]).then(([consent,attack]) => {
+if(!alive) return;
+if(attack){
+setSourceAttackId(attack.id);
+setDescription((attack.note ?? "").slice(0,MAX_DESCRIPTION_LENGTH));
+if(!attack.note?.trim()) setError("This attack has no saved transcript. Describe what you saw below.");
+}
+setStage(consent.granted ? "writing" : "consent");
+}).catch(()=>{if(alive) setStage("consent");});
+return ()=>{alive=false;};
+},[attackId]);
 
 useEffect(() => {
 if(stage === "review" && outcome) auraRef.current?.setState(outcome.state);
@@ -93,7 +112,8 @@ thumbnailPath=writeAuraImage(shot.dataUrl, `${Date.now()}.png`);
 thumbnailPath=null;
 }
 
-await saveAuraVersion({
+const saved=await saveAuraVersion({
+sourceAttackId,
 name: new Date().toLocaleDateString(undefined, {
 year: "numeric",
 month: "short",
@@ -109,13 +129,13 @@ warnings: outcome.warnings,
 },
 });
 void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-router.back();
+router.replace({pathname:"/builder",params:{versionId:saved.id}});
 }catch(err){
 setError(`Could not save: ${(err as Error).message}`);
 }finally {
 setBusy(false);
 }
-}, [outcome, description]);
+}, [outcome, description,sourceAttackId]);
 
 if(stage === "loading"){
 return (
@@ -139,7 +159,7 @@ return (
 {error ? <Text style={styles.error}>{error}</Text> : null}
 {!isAiConfigured() ? (
 <Text style={styles.error}>
-This build has no AI server configured, so this cannot be turned on
+This build has no drafting server configured, so this cannot be turned on
 here.
 </Text>
 ) : null}
@@ -180,7 +200,7 @@ return (
 What do you see?
 </Text>
 <Text style={styles.subtitle} maxFontSizeMultiplier={2}>
-Plain words are fine. You will be able to adjust everything afterwards.
+{sourceAttackId ? "From your attack recording. Check the words and add what you saw. The description becomes a draft you can edit." : "Plain words are fine. You will be able to adjust everything afterwards."}
 </Text>
 
 <TextInput
@@ -234,14 +254,22 @@ accessibilityLabel="Build a draft from this description"
 <ActivityIndicator color={colors.accentText} />
 ) : (
 <Text style={styles.primaryButtonText} maxFontSizeMultiplier={1.8}>
-Build a draft
+{sourceAttackId ? "Create aura from recording" : "Build a draft"}
 </Text>
 )}
 </Pressable>
 
-<Text style={styles.footnote}>
-Only these words are sent. Nothing else leaves your phone.
+{working ? (
+<Text style={styles.footnote} maxFontSizeMultiplier={1.8}>
+Drafting on the local model, {secs}s. This usually takes under a minute, but
+the first one after the server starts can take two while the model loads.
+Stay on this screen until it finishes.
 </Text>
+) : (
+<Text style={styles.footnote}>
+Only the text above is sent for this draft. You can edit it before continuing.
+</Text>
+)}
 </ScrollView>
 );
 }

@@ -1,11 +1,12 @@
 
-import { deriveFactors, buildRiskSet, lagMatrix } from "./features";
+import { deriveFactors, buildRiskSet, buildWorseningRiskSet, lagMatrix } from "./features";
 import { fitLogistic, waldP, zForCoverage } from "./logistic";
 import { submatrix, type Matrix } from "./linalg";
 import {
 ENGINE_VERSION,
 FACTOR_IDS,
 type DayRecord,
+type EngineMode,
 type EngineOutput,
 type FactorCounts,
 type FactorId,
@@ -21,6 +22,8 @@ minObservedDays: 45,
 minExposedDays: 10,
 minUnexposedDays: 10,
 minExposedOnsets: 3,
+minWorsenings: 10,
+continuousAttackFraction: 0.8,
 } as const;
 
 export const COVERAGE=0.95;
@@ -33,6 +36,7 @@ const PRIOR_SD_NUISANCE=5;
 export interface EngineOptions {
 priorSdExposure?: number;
 alpha?: number;
+mode?: EngineMode;
 }
 
 function emptyCounts(): FactorCounts {
@@ -51,12 +55,14 @@ factor: FactorId,
 reason: InsufficientReason,
 counts: FactorCounts,
 perStandardDeviation: boolean,
+continuousMode=false,
 ): FactorResult {
 return {
 factor,
 label: "not_enough_data",
 reason,
 counts,
+continuousMode,
 lags: [],
 rawP: null,
 adjustedP: null,
@@ -197,17 +203,27 @@ const priorSdExposure=options.priorSdExposure ?? PRIOR_SD_EXPOSURE;
 const alpha=options.alpha ?? ALPHA;
 const loggedDays=days.filter((d) => d.logged).length;
 const attackDays=days.filter((d) => d.logged && d.attack).length;
-const riskSet=buildRiskSet(days);
+const fraction=loggedDays > 0 ? attackDays / loggedDays : 0;
+
+const episodic=buildRiskSet(days);
+const episodicOnsets=episodic.outcome.reduce((a, b) => a + b, 0);
+
+const nearlyAlways=fraction >= THRESHOLDS.continuousAttackFraction;
+const starved=episodicOnsets < THRESHOLDS.minOnsets;
+const mode: EngineMode=options.mode ?? (nearlyAlways && starved ? "continuous" : "episodic");
+
+const riskSet=mode === "continuous" ? buildWorseningRiskSet(days) : episodic;
 const onsets=riskSet.outcome.reduce((a, b) => a + b, 0);
 
 const base: EngineOutput={
 engineVersion: ENGINE_VERSION,
+mode,
 windowStart: days.length > 0 ? days[0]!.date : null,
 windowEnd: days.length > 0 ? days[days.length - 1]!.date : null,
 loggedDays,
 riskDays: riskSet.indices.length,
 onsets,
-attackDayFraction: loggedDays > 0 ? attackDays / loggedDays : 0,
+attackDayFraction: fraction,
 factorsAssessed: 0,
 results: [],
 overallReason: null,
@@ -222,13 +238,17 @@ results: FACTOR_IDS.map((factor) => {
 const counts=emptyCounts();
 counts.riskDays=riskSet.indices.length;
 counts.onsets=onsets;
-return insufficient(factor, reason, counts, factors[factor].continuous);
+return insufficient(factor, reason, counts, factors[factor].continuous, mode === "continuous");
 }),
 };
 };
 
 if(loggedDays < THRESHOLDS.minLoggedDays) return everyFactorInsufficient("too_few_days");
-if(onsets < THRESHOLDS.minOnsets) return everyFactorInsufficient("too_few_onsets");
+if(mode === "continuous"){
+if(onsets < THRESHOLDS.minWorsenings) return everyFactorInsufficient("too_few_worsenings");
+}else if(onsets < THRESHOLDS.minOnsets){
+return everyFactorInsufficient("too_few_onsets");
+}
 
 const factors=deriveFactors(days);
 const finished: FactorResult[]=[];
@@ -250,6 +270,7 @@ return {
 factor: a.factor,
 label: sig ? (a.direction === "more" ? "linked_more" : "linked_fewer") : "no_clear_link",
 reason: null,
+continuousMode: mode === "continuous",
 counts: a.counts,
 lags: a.lags,
 rawP: a.rawP,

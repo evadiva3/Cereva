@@ -51,39 +51,6 @@ cctx.canvas,
 Math.round(x - box / 2), Math.round(y - box / 2), box, box,
 );
 }
-export function drawSoftRect(
-ctx: CanvasRenderingContext2D,
-x: number,
-y: number,
-w: number,
-h: number,
-feather: number,
-fillFn: FillFn,
-): void {
-if(w <= 0 || h <= 0) return;
-const f=Math.max(0.5, feather);
-const pad=Math.ceil(f + 2);
-const bw=Math.ceil(w + pad * 2);
-const bh=Math.ceil(h + pad * 2);
-const cctx=scratch("content", bw, bh);
-cctx.save();
-cctx.setTransform(1, 0, 0, 1, pad - x, pad - y);
-fillFn(cctx);
-cctx.restore();
-const mctx=scratch("mask", bw, bh);
-mctx.fillStyle="#fff";
-if(supportsCanvasFilter()){
-mctx.filter=`blur(${f / 2}px)`;
-mctx.fillRect(pad + f / 2, pad + f / 2, w - f, h - f);
-mctx.filter="none";
-}else{
-mctx.fillRect(pad, pad, w, h);
-}
-cctx.globalCompositeOperation="destination-in";
-cctx.drawImage(mctx.canvas, 0, 0, bw, bh, 0, 0, bw, bh);
-cctx.globalCompositeOperation="source-over";
-ctx.drawImage(cctx.canvas, 0, 0, bw, bh, Math.round(x - pad), Math.round(y - pad), bw, bh);
-}
 export function drawSoftPath(
 ctx: CanvasRenderingContext2D,
 pathPoints: ReadonlyArray<{ x: number; y: number }>,

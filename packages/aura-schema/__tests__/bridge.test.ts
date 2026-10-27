@@ -187,3 +187,48 @@ expect(r.ok).toBe(false);
 if(!r.ok) expect(r.code).toBe("unknown_type");
 });
 });
+
+describe("gif messages", () => {
+it("accepts a plain gif request", () => {
+expect(parseHostMessage(wrap({ type: "requestGif" })).ok).toBe(true);
+expect(parseHostMessage(wrap({ type: "requestGif", frames: 24, fps: 12, scale: 0.5 })).ok).toBe(true);
+});
+
+it.each([
+["frames", 1],
+["frames", 61],
+["fps", 0],
+["fps", 31],
+["scale", 0],
+["scale", 3],
+])("rejects %s out of range: %s", (field, value) => {
+const r=parseHostMessage(wrap({ type: "requestGif", [field]: value }));
+expect(r.ok).toBe(false);
+});
+
+it("rejects a non numeric bound", () => {
+expect(parseHostMessage(wrap({ type: "requestGif", frames: "lots" })).ok).toBe(false);
+expect(parseHostMessage(wrap({ type: "requestGif", fps: null })).ok).toBe(false);
+});
+
+it("accepts a gif reply that really is a gif", () => {
+const r=parseRendererMessage(
+wrap({ type: "gif", dataUrl: "data:image/gif;base64,R0lGOD", width: 240, height: 480, frames: 24 }),
+);
+expect(r.ok).toBe(true);
+});
+
+it("refuses a gif reply that is not a gif data url", () => {
+expect(
+parseRendererMessage(
+wrap({ type: "gif", dataUrl: "data:image/png;base64,iVBOR", width: 1, height: 1, frames: 2 }),
+).ok,
+).toBe(false);
+expect(
+parseRendererMessage(
+wrap({ type: "gif", dataUrl: "https://example.com/a.gif", width: 1, height: 1, frames: 2 }),
+).ok,
+).toBe(false);
+});
+});
+

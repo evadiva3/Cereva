@@ -139,22 +139,35 @@ limit,
 return rows.map(hydrate);
 }
 
-export async function deleteAttack(id: string): Promise<string | null> {
-const db=await getDb();
-const row=await db.getFirstAsync<{ voice_note_path: string | null }>(
-"SELECT voice_note_path FROM attacks WHERE id = ?",
-id,
-);
-await db.runAsync("DELETE FROM attacks WHERE id = ?", id);
-return row?.voice_note_path ?? null;
+export interface Reading {
+id: number;
+attackId: string;
+at: string;
+localDate: string;
+severity: Severity | null;
+note: string | null;
 }
 
-export async function attacksPerMonth(): Promise<{ month: string; attacks: number }[]> {
+
+export async function addReading(
+attackId: string,
+severity: Severity | null,
+note: string | null = null,
+): Promise<void> {
 const db=await getDb();
-return db.getAllAsync<{ month: string; attacks: number }>(
-`SELECT substr(local_date, 1, 7) AS month, COUNT(*) AS attacks
-       FROM attacks
-      GROUP BY month
-      ORDER BY month DESC`,
+const at=new Date().toISOString();
+await db.runAsync(
+"INSERT INTO attack_readings (attack_id, at, local_date, severity, note) VALUES (?, ?, ?, ?, ?)",
+attackId,
+at,
+localDate(),
+severity,
+note,
 );
+if(severity) await db.runAsync("UPDATE attacks SET severity = ? WHERE id = ?", severity, attackId);
+}
+
+export async function markContinuous(id: string, on: boolean): Promise<void> {
+const db=await getDb();
+await db.runAsync("UPDATE attacks SET continuous = ? WHERE id = ?", on ? 1 : 0, id);
 }

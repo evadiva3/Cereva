@@ -21,7 +21,8 @@
         "NSHealthShareUsageDescription": "Cereva reads your sleep, step count, and cycle if you log it, so it can look for patterns alongside your migraine days. It only reads, never writes, and this data never leaves your phone.",
         "NSLocationWhenInUseUsageDescription": "Cereva uses a rough idea of your location to look up air pressure and weather, which are possible migraine factors. The location is rounded before it is used and is never stored.",
         "NSMicrophoneUsageDescription": "Record a short voice note during an attack, when typing is hard. Voice notes stay on your phone."
-      }
+      },
+      "icon": "./assets/icon-defined.png"
     },
     "plugins": [
       "expo-router",
@@ -73,6 +74,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "icon": "./assets/icon-defined.png"
   }
 }

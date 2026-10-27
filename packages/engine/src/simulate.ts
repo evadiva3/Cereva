@@ -82,7 +82,7 @@ const menstruating: boolean[]=[];
 const cycleStart=Math.floor(rand() * 28);
 for(let i = 0; i < n; i++){
 const weekend=i % 7 === 5 || i % 7 === 6;
-alcohol.push(rand() < (weekend ? 0.42 : 0.12));
+alcohol.push(rand() < 0.15);
 caffeine.push(rand() < 0.18);
 skipped.push(rand() < (weekend ? 0.1 : 0.17));
 loosen.push(!weekend && rand() < 0.3);
@@ -136,6 +136,7 @@ days.push({
 date: dateAt(i),
 logged,
 attack: attack[i]!,
+severity: logged ? (attack[i] ? 2 : 0) : null,
 alcohol: logged ? alcohol[i]! : null,
 caffeineChange: logged ? caffeine[i]! : null,
 skippedMeal: logged ? skipped[i]! : null,

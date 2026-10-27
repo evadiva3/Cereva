@@ -64,3 +64,15 @@ export const SAFETY_NOTE =
 export const AURA_DISCLAIMER =
 "This is a personal representation you built. It is not a measurement and " +
 "not a diagnosis.";
+
+export const cardDepth={
+borderWidth: 1,
+borderColor: "#2d363c",
+borderTopColor: "#46535b",
+borderBottomColor: "#080b0d",
+shadowColor: "#000000",
+shadowOffset: { width: 0, height: 6 },
+shadowOpacity: 0.32,
+shadowRadius: 10,
+elevation: 5,
+} as const;

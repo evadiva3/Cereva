@@ -25,6 +25,7 @@ removeLayer(type: LayerType): void;
 toggleLayer(type: LayerType): void;
 setLayerOpacity(type: LayerType, opacity: number): void;
 setLayerField(type: LayerType, field: string, value: unknown): void;
+setLayerConfig(type: LayerType, config: SymptomLayer["config"]): void;
 moveLayer(type: LayerType, direction: -1 | 1): void;
 setBackground(background: BackgroundConfig): void;
 loadPreset(presetId: string): void;
@@ -44,6 +45,7 @@ stateRef.current=state;
 
 const commit=useCallback((next: AuraState, markDirty=true) => {
 const res=normalizeAuraState(next);
+stateRef.current=res.state;
 setState(res.state);
 setWarnings(res.warnings);
 if(markDirty) setDirty(true);
@@ -107,6 +109,9 @@ l.type === type
 [mapLayers],
 );
 
+const setLayerConfig=useCallback((type: LayerType, config: SymptomLayer["config"]) =>
+mapLayers(layers => layers.map(layer => layer.type === type ? { ...layer, config } as SymptomLayer : layer)), [mapLayers]);
+
 const moveLayer=useCallback(
 (type: LayerType, direction: -1 | 1) =>
 mapLayers((layers) => {
@@ -167,6 +172,7 @@ removeLayer,
 toggleLayer,
 setLayerOpacity,
 setLayerField,
+setLayerConfig,
 moveLayer,
 setBackground,
 loadPreset,
@@ -183,6 +189,7 @@ removeLayer,
 toggleLayer,
 setLayerOpacity,
 setLayerField,
+setLayerConfig,
 moveLayer,
 setBackground,
 loadPreset,

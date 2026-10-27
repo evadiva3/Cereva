@@ -132,6 +132,34 @@ statements: [
 `CREATE INDEX idx_events_date ON events (local_date)`,
 ],
 },
+{
+version: 2,
+name: "severity readings over time, for attacks that do not end",
+statements: [
+`CREATE TABLE attack_readings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        attack_id TEXT NOT NULL,
+        at TEXT NOT NULL,
+        local_date TEXT NOT NULL,
+        severity TEXT,
+        note TEXT,
+        FOREIGN KEY (attack_id) REFERENCES attacks (id) ON DELETE CASCADE
+      )`,
+`CREATE INDEX idx_readings_attack ON attack_readings (attack_id)`,
+`CREATE INDEX idx_readings_date ON attack_readings (local_date)`,
+`ALTER TABLE attacks ADD COLUMN continuous INTEGER NOT NULL DEFAULT 0`,
+],
+},
+{
+version: 3,
+name: "a name to greet them by",
+statements: [`ALTER TABLE settings ADD COLUMN display_name TEXT`],
+},
+{
+version:4,
+name:"link generated aura versions to their recorded attack",
+statements:[`ALTER TABLE aura_versions ADD COLUMN source_attack_id TEXT REFERENCES attacks(id) ON DELETE SET NULL`],
+},
 ];
 
 export const LATEST_VERSION=MIGRATIONS.reduce(

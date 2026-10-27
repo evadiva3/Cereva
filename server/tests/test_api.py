@@ -5,8 +5,8 @@ import logging
 import pytest
 from fastapi.testclient import TestClient
 
-from scintilla_proxy import claude, main
-from scintilla_proxy.claude import DraftResult, ModelRefusedError, ModelUnavailableError
+from cereva_proxy import claude, main
+from cereva_proxy.claude import DraftResult, ModelRefusedError, ModelUnavailableError
 
 @pytest.fixture
 def client(monkeypatch):
@@ -178,7 +178,7 @@ def test_a_lying_content_length_is_still_caught(client):
  assert response.status_code in (400, 413, 422)
 
 def test_client_token_is_required_when_configured(client, monkeypatch):
- monkeypatch.setenv("SCINTILLA_CLIENT_TOKEN", "a-real-token")
+ monkeypatch.setenv("CEREVA_CLIENT_TOKEN", "a-real-token")
  monkeypatch.setattr(main, "draft_from_description", lambda d: fake_draft())
 
  refused=client.post("/v1/describe", json={"description": "static everywhere"})
@@ -188,25 +188,25 @@ def test_client_token_is_required_when_configured(client, monkeypatch):
  wrong=client.post(
   "/v1/describe",
   json={"description": "static everywhere"},
-  headers={"x-scintilla-client": "not-the-token"},
+  headers={"x-cereva-client": "not-the-token"},
  )
  assert wrong.status_code == 401
 
  right=client.post(
   "/v1/describe",
   json={"description": "static everywhere"},
-  headers={"x-scintilla-client": "a-real-token"},
+  headers={"x-cereva-client": "a-real-token"},
  )
  assert right.status_code == 200
 
 def test_no_token_configured_means_open(client, monkeypatch):
- monkeypatch.delenv("SCINTILLA_CLIENT_TOKEN", raising=False)
+ monkeypatch.delenv("CEREVA_CLIENT_TOKEN", raising=False)
  monkeypatch.setattr(main, "draft_from_description", lambda d: fake_draft())
  assert client.post("/v1/describe", json={"description": "static everywhere"}).status_code == 200
 
- from scintilla_proxy.security import startup_warnings
+ from cereva_proxy.security import startup_warnings
 
- assert any("SCINTILLA_CLIENT_TOKEN" in w for w in startup_warnings())
+ assert any("CEREVA_CLIENT_TOKEN" in w for w in startup_warnings())
 
 def test_server_misconfiguration_is_not_disclosed_to_the_client(client, monkeypatch):
 
@@ -226,10 +226,10 @@ def test_security_headers_are_present(client):
  assert headers["x-content-type-options"] == "nosniff"
  assert headers["x-frame-options"] == "DENY"
  assert headers["referrer-policy"] == "no-referrer"
- assert headers.get("server") == "scintilla"
+ assert headers.get("server") == "cereva"
 
 def test_startup_warns_about_a_wide_open_forwarded_header(monkeypatch):
- from scintilla_proxy.security import startup_warnings
+ from cereva_proxy.security import startup_warnings
 
  monkeypatch.setenv("FORWARDED_ALLOW_IPS", "*")
  assert any("X-Forwarded-For" in w for w in startup_warnings())

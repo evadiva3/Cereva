@@ -8,11 +8,11 @@ type AuraState,
 type Warning,
 } from "@aura/schema";
 
-const PROXY_URL=process.env.EXPO_PUBLIC_SCINTILLA_PROXY_URL ?? "";
+const PROXY_URL=process.env.EXPO_PUBLIC_CEREVA_PROXY_URL ?? "";
 
-const CLIENT_TOKEN=process.env.EXPO_PUBLIC_SCINTILLA_CLIENT_TOKEN ?? "";
+const CLIENT_TOKEN=process.env.EXPO_PUBLIC_CEREVA_CLIENT_TOKEN ?? "";
 
-const TIMEOUT_MS=30_000;
+const TIMEOUT_MS=260_000;
 
 export const MAX_DESCRIPTION_LENGTH=2000;
 
@@ -48,7 +48,7 @@ model: string;
 export class AiDisabledError extends Error {
 constructor(){
 super(
-"Describing an aura in words needs the AI feature turned on. " +
+"Describing an aura in words needs that feature turned on. " +
 "You can build any aura by hand without it.",
 );
 this.name="AiDisabledError";
@@ -58,7 +58,7 @@ this.name="AiDisabledError";
 export class AiNotConfiguredError extends Error {
 constructor(){
 super(
-"This build has no AI server configured, so describing in words is " +
+"This build has no drafting server configured, so describing in words is " +
 "unavailable. Building by hand works normally.",
 );
 this.name="AiNotConfiguredError";
@@ -105,7 +105,7 @@ response=await fetch(`${PROXY_URL.replace(/\/$/, "")}/v1/describe`, {
 method: "POST",
 headers: {
 "content-type": "application/json",
-...(CLIENT_TOKEN ? { "x-scintilla-client": CLIENT_TOKEN } : {}),
+...(CLIENT_TOKEN ? { "x-cereva-client": CLIENT_TOKEN } : {}),
 },
 body: JSON.stringify({ description: trimmed }),
 signal: controller.signal,

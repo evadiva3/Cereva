@@ -6,6 +6,8 @@ logged: boolean;
 
 attack: boolean;
 
+severity: number | null;
+
 alcohol: boolean | null;
 caffeineChange: boolean | null;
 skippedMeal: boolean | null;
@@ -68,6 +70,7 @@ not_enough_data: "not enough data yet",
 export type InsufficientReason =
 | "too_few_days"
 | "too_few_onsets"
+| "too_few_worsenings"
 | "too_few_exposed"
 | "too_few_unexposed"
 | "too_few_exposed_onsets"
@@ -100,10 +103,14 @@ lags: LagEstimate[];
 rawP: number | null;
 adjustedP: number | null;
 perStandardDeviation: boolean;
+continuousMode: boolean;
 }
+
+export type EngineMode = "episodic" | "continuous";
 
 export interface EngineOutput {
 engineVersion: string;
+mode: EngineMode;
 windowStart: string | null;
 windowEnd: string | null;
 loggedDays: number;

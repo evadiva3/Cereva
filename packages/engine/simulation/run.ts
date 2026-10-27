@@ -13,9 +13,8 @@ const FREQUENCIES: { name: string; rate: number }[]=[
 ];
 
 const PLANTED: { factor: FactorId; oddsRatio: number; lag: 0 | 1 }[]=[
-{ factor: "alcohol", oddsRatio: 2.0, lag: 1 },
-{ factor: "alcohol", oddsRatio: 3.0, lag: 1 },
 { factor: "sleep_short", oddsRatio: 2.0, lag: 1 },
+{ factor: "sleep_short", oddsRatio: 3.0, lag: 1 },
 { factor: "pressure_change", oddsRatio: 1.5, lag: 0 },
 { factor: "skipped_meal", oddsRatio: 2.0, lag: 0 },
 ];

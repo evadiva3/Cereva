@@ -28,7 +28,7 @@ captured.push({ v: -1, id: "unparseable", body: { type: "unparseable", data } })
 
 let seq=0;
 function send(body: HostMessage): void {
-window.scintilla?.send(envelope(`h${++seq}`, body));
+window.cereva?.send(envelope(`h${++seq}`, body));
 }
 
 interface Harness {
@@ -71,10 +71,10 @@ presetIds: () => AURA_PRESETS.map((p) => p.id),
 (window as unknown as { harness: Harness }).harness = harness;
 
 async function autoDrive(): Promise<void> {
-for(let i = 0; i < 200 && !window.scintilla; i++){
+for(let i = 0; i < 200 && !window.cereva; i++){
 await new Promise((r) => setTimeout(r, 10));
 }
-if(!window.scintilla){
+if(!window.cereva){
 console.error("[harness] the engine never booted");
 return;
 }

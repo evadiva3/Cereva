@@ -1,7 +1,7 @@
 
 import * as Location from "expo-location";
 
-import { addDays, daysBetween, localDate, today } from "@/dates";
+import { addDays, daysBetween, today } from "@/dates";
 import {
 datesMissingWeather,
 recomputeChanges,
@@ -169,5 +169,3 @@ await recomputeChanges();
 
 return { fetched, skipped: wanted.length - missing.length, error: null };
 }
-
-export const __testing={ coarsen, GRID_DEGREES, localDate };

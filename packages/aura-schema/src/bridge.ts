@@ -10,6 +10,7 @@ export type HostMessage =
 | { type: "setMotion"; pointer: { x: number; y: number } | null }
 | { type: "setQuality"; maxDpr?: number; depthOfField?: boolean }
 | { type: "requestSnapshot"; scale?: number }
+| { type: "requestGif"; frames?: number; fps?: number; scale?: number }
 | { type: "startCamera" }
 | { type: "stopCamera" }
 | { type: "requestStats" }
@@ -21,6 +22,8 @@ layers: string[];
 webgl2: boolean;
 canvasFilter: boolean;
 compositeReadingLayers: string[];
+secureContext: boolean;
+origin: string;
 }
 
 export interface CameraReport {
@@ -50,6 +53,7 @@ export type RendererMessage =
 | { type: "error"; code: ErrorCode; message: string; detail?: string }
 | { type: "accepted"; warnings: Warning[]; layerCount: number }
 | { type: "snapshot"; dataUrl: string; width: number; height: number }
+| { type: "gif"; dataUrl: string; width: number; height: number; frames: number }
 | { type: "stats"; stats: FrameStats }
 | { type: "camera"; report: CameraReport }
 | { type: "pong" };
@@ -129,6 +133,7 @@ const HOST_TYPES=new Set<HostMessage["type"]>([
 "setMotion",
 "setQuality",
 "requestSnapshot",
+"requestGif",
 "startCamera",
 "stopCamera",
 "requestStats",
@@ -141,6 +146,7 @@ const RENDERER_TYPES=new Set<RendererMessage["type"]>([
 "error",
 "accepted",
 "snapshot",
+"gif",
 "stats",
 "camera",
 "pong",
@@ -196,6 +202,25 @@ id: outer.value.id,
 }
 }
 
+if(type === "requestGif"){
+const limits: [string, unknown, number, number][]=[
+["frames", body.frames, 2, 60],
+["fps", body.fps, 1, 30],
+["scale", body.scale, 0.1, 2],
+];
+for(const [name, raw, lo, hi] of limits){
+if(raw === undefined) continue;
+if(!isRealNumber(raw) || raw < lo || raw > hi){
+return {
+ok: false,
+code: "bad_payload",
+message: `requestGif ${name} must be between ${lo} and ${hi}`,
+id: outer.value.id,
+};
+}
+}
+}
+
 if(type === "requestSnapshot" && body.scale !== undefined){
 const s=body.scale;
 if(!isRealNumber(s) || s <= 0 || s > 4){
@@ -239,6 +264,18 @@ return {
 ok: false,
 code: "bad_payload",
 message: "ready must carry capabilities.layers",
+id: outer.value.id,
+};
+}
+}
+
+if(type === "gif"){
+const u=body.dataUrl;
+if(typeof u !== "string" || !u.startsWith("data:image/gif")){
+return {
+ok: false,
+code: "bad_payload",
+message: "gif dataUrl must be a data:image/gif URL",
 id: outer.value.id,
 };
 }

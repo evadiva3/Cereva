@@ -16,7 +16,7 @@ type RendererCapabilities,
 type Warning,
 } from "@aura/schema";
 import { colors } from "@/theme";
-import { getRendererSource } from "./rendererSource";
+import { fileRendererSource, getRendererSource, rendererUri } from "./rendererSource";
 
 export interface AuraViewHandle {
 setState(state: AuraState): void;
@@ -26,6 +26,12 @@ setQuality(q: { maxDpr?: number; depthOfField?: boolean }): void;
 startCamera(): void;
 stopCamera(): void;
 snapshot(scale?: number): Promise<{ dataUrl: string; width: number; height: number }>;
+recordGif(opts?: { frames?: number; fps?: number; scale?: number }): Promise<{
+dataUrl: string;
+width: number;
+height: number;
+frames: number;
+}>;
 measure(seconds: number): Promise<FrameStats>;
 }
 
@@ -41,11 +47,13 @@ pointerEventsNone?: boolean;
 interface PendingRequest {
 resolve: (value: never) => void;
 reject: (reason: Error) => void;
-kind: "snapshot" | "stats";
+kind: "snapshot" | "stats" | "gif";
 timer: ReturnType<typeof setTimeout>;
 }
 
 const REQUEST_TIMEOUT_MS=10_000;
+
+const GIF_TIMEOUT_MS=60_000;
 
 export const AuraView=forwardRef<AuraViewHandle, AuraViewProps>(function AuraView(
 { style, onReady, onWarnings, onCamera, onError, pointerEventsNone },
@@ -58,6 +66,7 @@ const queueRef=useRef<HostMessage[]>([]);
 const seqRef=useRef(0);
 const pendingRef=useRef(new Map<string, PendingRequest>());
 
+const didFallback=useRef(false);
 const cb=useRef({ onReady, onWarnings, onCamera, onError });
 cb.current={ onReady, onWarnings, onCamera, onError };
 
@@ -103,7 +112,7 @@ return id;
 );
 
 const request=useCallback(
-<T,>(body: HostMessage, kind: PendingRequest["kind"]): Promise<T> => {
+<T,>(body: HostMessage, kind: PendingRequest["kind"], timeoutMs=REQUEST_TIMEOUT_MS): Promise<T> => {
 if(!readyRef.current){
 return Promise.reject(
 new Error("The renderer is not ready yet. Wait for onReady."),
@@ -114,7 +123,7 @@ return new Promise<T>((resolve, reject) => {
 const timer=setTimeout(() => {
 pendingRef.current.delete(id);
 reject(new Error(`The renderer did not answer the ${kind} request in time.`));
-}, REQUEST_TIMEOUT_MS);
+}, timeoutMs);
 pendingRef.current.set(id, {
 resolve: resolve as (value: never) => void,
 reject,
@@ -145,6 +154,15 @@ pending.resolve({
 dataUrl: body.dataUrl,
 width: body.width,
 height: body.height,
+} as never);
+return;
+}
+if(body.type === "gif" && pending.kind === "gif"){
+pending.resolve({
+dataUrl: body.dataUrl,
+width: body.width,
+height: body.height,
+frames: body.frames,
 } as never);
 return;
 }
@@ -198,6 +216,12 @@ scale === undefined
 : { type: "requestSnapshot", scale },
 "snapshot",
 ),
+recordGif: (opts) =>
+request(
+{ type: "requestGif", ...(opts ?? {}) },
+"gif",
+GIF_TIMEOUT_MS,
+),
 measure: async (seconds) => {
 send({ type: "resetStats" });
 await new Promise((r) => setTimeout(r, seconds * 1000));
@@ -222,6 +246,7 @@ bounces={false}
 overScrollMode="never"
 allowsInlineMediaPlayback
 mediaPlaybackRequiresUserAction={false}
+mediaCapturePermissionGrantType="grant"
 originWhitelist={["file://*", "http://localhost*", "http://127.0.0.1*", "about:*"]}
 onShouldStartLoadWithRequest={(req) => {
 const ok =
@@ -246,9 +271,18 @@ containerStyle={styles.web}
 onRenderProcessGone={() =>
 cb.current.onError?.("The renderer stopped unexpectedly. Reopen this screen.")
 }
-onError={(e) =>
-cb.current.onError?.(`The renderer failed to load: ${e.nativeEvent.description}`)
+onError={(e) => {
+if(!didFallback.current){
+didFallback.current=true;
+cb.current.onError?.(
+`Could not load the renderer from ${rendererUri()}, using the bundled ` +
+"copy instead. The camera stays off.",
+);
+void fileRendererSource().then(setSource).catch(() => {});
+return;
 }
+cb.current.onError?.(`The renderer failed to load: ${e.nativeEvent.description}`);
+}}
 />
 </View>
 );

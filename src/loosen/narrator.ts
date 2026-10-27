@@ -10,7 +10,7 @@ isAudible(): boolean;
 export class SpeechNarrator implements Narrator {
 private available = true;
 
-constructor(private readonly rate = 0.78, private readonly pitch = 0.95) {}
+constructor(private readonly rate = 0.68, private readonly pitch = 0.9) {}
 
 say(text: string, _stepId: string): Promise<void> {
 if(!this.available) return Promise.resolve();

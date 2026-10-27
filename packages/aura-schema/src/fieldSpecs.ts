@@ -111,7 +111,7 @@ churn: n(0, 1, 1.0, "Churn", { hint: "how much of the field re-randomizes per fr
 },
 
 eye_floaters: {
-variant: e(["opaque", "translucent"] as const, "opaque", "Variant"),
+variant: e(["opaque", "translucent"] as const, "translucent", "Variant"),
 count: n(1, 20, 6, "Count", { int: true }),
 drift_speed: n(0.1, 2.0, 0.3, "Drift speed"),
 drift_pattern: e(
@@ -120,7 +120,7 @@ drift_pattern: e(
 "Drift pattern",
 ),
 size_variance: n(0, 1, 0.5, "Size variance"),
-color: c("#2a2a2a", "Color", "opaque variant only"),
+color: c("#4a4a4a", "Color", "opaque variant only"),
 custom_shapes: {
 kind: "polylines",
 minPoints: 8,
@@ -175,6 +175,7 @@ brightness: n(0.1, 1.0, 0.65, "Brightness"),
 },
 
 fortification_spectra: {
+radius_scale:n(0.1,4,1,"Aura size"),
 origin_x: n(0, 1, 0.5, "Origin horizontal"),
 origin_y: n(0, 1, 0.5, "Origin vertical"),
 expansion_rate: n(0.1, 200, 2.0, "Expansion rate", { unit: "px per second" }),
@@ -229,7 +230,7 @@ of: {
 x: n(0, 1, 0.6, "Horizontal position"),
 y: n(0, 1, 0.4, "Vertical position"),
 size: n(0.01, 1, 0.1, "Size"),
-shape: e(["circular", "irregular"] as const, "circular", "Shape"),
+shape: e(["circular", "irregular"] as const, "irregular", "Shape"),
 opacity: n(0, 1, 0.7, "Opacity"),
 edge_softness: n(0, 1, 0.5, "Edge softness", {
 hint: "legacy, superseded by the layer-level edge softness in px",
@@ -244,7 +245,7 @@ default: [
 x: 0.6,
 y: 0.4,
 size: 0.1,
-shape: "circular",
+shape: "irregular",
 opacity: 0.7,
 edge_softness: 0.5,
 seed: 1,
@@ -253,7 +254,7 @@ seed: 1,
 label: "Scotomas",
 },
 fill_color: c("#12080e", "Fill color"),
-border_color: c("#2a1535", "Border color"),
+border_color: c("#12080e", "Border color", "match the fill for no visible outline"),
 edge_softness_px: n(20, 65, 45.0, "Edge softness", { unit: "px" }),
 seamless: b(false, "Seamless", "no identifiable boundary; overrides edge softness"),
 ...SPECTRUM_COLOR_MODE_FIELDS,

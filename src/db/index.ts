@@ -2,14 +2,14 @@
 import * as SQLite from "expo-sqlite";
 import { LATEST_VERSION, MIGRATIONS } from "./migrations";
 
-const DB_NAME="scintilla.db";
+const DB_NAME="cereva.db";
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null=null;
 
 export class SchemaTooNewError extends Error {
 constructor(found: number, known: number){
 super(
-`This database was written by a newer version of Scintilla ` +
+`This database was written by a newer version of Cereva ` +
 `(schema ${found}, this build knows ${known}). Update the app to open it.`,
 );
 this.name="SchemaTooNewError";
@@ -90,10 +90,6 @@ await tx.execAsync(`DELETE FROM ${t}`);
 await tx.execAsync("DELETE FROM sqlite_sequence");
 });
 await ensureSettingsRow(db);
-}
-
-export function resetConnectionForTests(): void {
-dbPromise=null;
 }
 
 export { LATEST_VERSION };

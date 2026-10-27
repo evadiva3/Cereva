@@ -1,15 +1,21 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+Animated,
+PanResponder,
+Modal,
 Pressable,
 ScrollView,
 StyleSheet,
 Text,
 View,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+
+import { SCENES, hasScenes, sceneDataUri, type Scene } from "@/scenes/scenes";
 import * as Sharing from "expo-sharing";
 
 import {
@@ -27,22 +33,79 @@ type RendererCapabilities,
 } from "@aura/schema";
 
 import { AuraView, type AuraViewHandle } from "@/aura/AuraView";
+import { rendererFallbackReason, rendererUri } from "@/aura/rendererSource";
+import { AuraDrag } from "@/aura/AuraDrag";
+import { layerAnchors, movedConfig } from "@/aura/position";
 import { availableLayers, useAuraDraft } from "@/aura/useAuraDraft";
-import { saveAuraVersion } from "@/db/auraVersions";
+import { canResize, resizeFields } from "@/aura/resize";
+import { saveAuraVersion, listAuraVersions, getAuraVersion, type AuraVersion } from "@/db/auraVersions";
+import { listAttacks, type Attack } from "@/db/attacks";
 import { writeAuraImage, writeShareImage } from "@/files";
 import { FieldControl, announce } from "@/ui/controls";
 import { AURA_DISCLAIMER, colors, radius, space, touch, type as typeScale } from "@/theme";
 
-type Panel = "layers" | "add" | "presets" | "background";
+type Panel = "layers" | "add" | "background";
 
 export default function BuilderScreen(){
 const auraRef=useRef<AuraViewHandle>(null);
+const params=useLocalSearchParams<{versionId?:string}>();
+const loadedVersion=useRef<string | null>(null);
+const sourceVersion=useRef<AuraVersion | null>(null);
+const [menuOpen,setMenuOpen]=useState(false);
+const [versions,setVersions]=useState<AuraVersion[]>([]);
+const [recordedAttacks,setRecordedAttacks]=useState<Attack[]>([]);
 const draft=useAuraDraft();
 const [panel, setPanel]=useState<Panel>("layers");
 const [openLayer, setOpenLayer]=useState<LayerType | null>(null);
+const [advanced,setAdvanced]=useState(false);
 const [caps, setCaps]=useState<RendererCapabilities | null>(null);
 const [notice, setNotice]=useState<string | null>(null);
 const [busy, setBusy]=useState(false);
+
+const sheetHeight=useRef(new Animated.Value(300)).current;
+const sheetGeometry=useRef({available:600,current:300,start:300,initialized:false});
+const setSheetHeight=useCallback((height:number) => {
+const geometry=sheetGeometry.current;
+const next=Math.max(geometry.available * 0.28,Math.min(geometry.available * 0.84,height));
+geometry.current=next;
+sheetHeight.setValue(next);
+},[sheetHeight]);
+const sheetGesture=useRef(PanResponder.create({
+onStartShouldSetPanResponder:e => e.nativeEvent.locationY < 44,
+onMoveShouldSetPanResponder:(_event,gesture) => Math.abs(gesture.dy)>6 && Math.abs(gesture.dy)>Math.abs(gesture.dx),
+onPanResponderGrant:() => {
+sheetHeight.stopAnimation(value => { sheetGeometry.current.current=value; sheetGeometry.current.start=value; });
+void Haptics.selectionAsync();
+},
+onPanResponderMove:(_event,gesture) => setSheetHeight(sheetGeometry.current.start-gesture.dy),
+onPanResponderRelease:(_event,gesture) => {
+const geometry=sheetGeometry.current;
+const projected=geometry.current-gesture.vy*100;
+const stops=[0.28,0.52,0.84].map(fraction => fraction*geometry.available);
+const destination=stops.reduce((nearest,value) => Math.abs(value-projected)<Math.abs(nearest-projected) ? value : nearest);
+geometry.current=destination;
+Animated.spring(sheetHeight,{toValue:destination,useNativeDriver:false,damping:28,stiffness:240,mass:1,isInteraction:false}).start();
+},
+onPanResponderTerminationRequest:() => false,
+})).current;
+
+useEffect(() => {
+if(!menuOpen) return;
+let alive=true;
+Promise.all([listAuraVersions(),listAttacks(50)]).then(([saved,attacks]) => {
+if(alive){setVersions(saved);setRecordedAttacks(attacks.filter(attack=>attack.note?.trim()));}
+}).catch(()=>setNotice("Could not load saved configurations."));
+return ()=>{alive=false;};
+},[menuOpen]);
+useEffect(() => {
+const id=params.versionId;
+if(!id || loadedVersion.current === id) return;
+let alive=true;
+void getAuraVersion(id).then(version => {
+if(alive && version){draft.load(version.state);sourceVersion.current=version;loadedVersion.current=id;setPanel("layers");}
+}).catch(()=>setNotice("Could not open that configuration."));
+return ()=>{alive=false;};
+},[params.versionId,draft.load]);
 
 useEffect(() => {
 auraRef.current?.setState(draft.state);
@@ -52,6 +115,17 @@ const onWarnings=useCallback((warnings: typeof draft.warnings) => {
 const notable=warnings.filter((w) => w.kind === "clamped" || w.kind === "unknown_layer");
 if(notable.length > 0 && notable[0]){
 setNotice(notable[0].message);
+}
+}, []);
+
+const onReady=useCallback((c: RendererCapabilities) => {
+setCaps(c);
+if(!c.secureContext){
+const why=rendererFallbackReason();
+setNotice(
+`Camera off. Loaded ${rendererUri()}, origin ${c.origin || "file://"}, ` +
+`secure=${c.secureContext}.${why ? ` Server: ${why}` : ""}`,
+);
 }
 }, []);
 
@@ -95,6 +169,18 @@ setNotice("That photo could not be read.");
 }
 }, [draft]);
 
+const useScene=useCallback(
+async (scene: Scene) => {
+void Haptics.selectionAsync();
+try {
+draft.setBackground(photoBackground(await sceneDataUri(scene)));
+} catch {
+setNotice("That scene could not be loaded.");
+}
+},
+[draft],
+);
+
 const setBackground=useCallback(
 (type: BackgroundType) => {
 void Haptics.selectionAsync();
@@ -131,7 +217,7 @@ year: "numeric",
 month: "short",
 day: "numeric",
 });
-await saveAuraVersion({ name, state: draft.state, thumbnailPath });
+await saveAuraVersion({ name, state: draft.state, thumbnailPath,sourceAttackId:sourceVersion.current?.sourceAttackId ?? null,provenance:sourceVersion.current?.provenance ?? null });
 draft.markSaved();
 void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 setNotice("Saved.");
@@ -141,6 +227,30 @@ setNotice(`Could not save: ${(err as Error).message}`);
 setBusy(false);
 }
 }, [draft]);
+
+const shareGif=useCallback(async () => {
+setBusy(true);
+setNotice("Recording a few seconds of the aura.");
+try {
+const gif=await auraRef.current?.recordGif({ frames: 24, fps: 12, scale: 0.5 });
+if(!gif) throw new Error("the renderer did not return a gif");
+const path=writeShareImage(gif.dataUrl, "aura.gif");
+if(!(await Sharing.isAvailableAsync())){
+setNotice("Sharing is not available on this device.");
+return;
+}
+setNotice(null);
+await Sharing.shareAsync(path, {
+mimeType: "image/gif",
+dialogTitle: "Share your aura",
+UTI: "com.compuserve.gif",
+});
+}catch(err){
+setNotice(`Could not make a gif: ${(err as Error).message}`);
+}finally {
+setBusy(false);
+}
+}, []);
 
 const share=useCallback(async () => {
 setBusy(true);
@@ -164,39 +274,33 @@ setBusy(false);
 }, []);
 
 const bg=draft.state.background.background_type;
+const canDrag=draft.state.layers.some(layer => layerAnchors(layer).length>0 || canResize(layer));
+const selectedLayer=draft.state.layers.find(layer => layer.type === openLayer);
+const selectedIsGlobal=selectedLayer && layerAnchors(selectedLayer).length===0 && !canResize(selectedLayer);
 
 return (
-<View style={styles.root}>
-<View style={styles.stage}>
+<View style={styles.root} onLayout={event => {
+const height=event.nativeEvent.layout.height;
+const geometry=sheetGeometry.current;
+const fraction=geometry.initialized ? geometry.current/geometry.available : 0.48;
+geometry.available=height;
+geometry.initialized=true;
+setSheetHeight(height*fraction);
+}}>
+<View
+style={styles.stage}
+
+>
 <AuraView
 ref={auraRef}
-onReady={setCaps}
+onReady={onReady}
 onWarnings={onWarnings}
 onCamera={onCamera}
 onError={setNotice}
 />
-<Pressable
-style={styles.attackButton}
-onPress={() => {
-void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-router.push("/attack");
-}}
-accessibilityRole="button"
-accessibilityLabel="Log a migraine attack starting now"
->
-<Text style={styles.attackButtonText}>Attack</Text>
-</Pressable>
-<Pressable
-style={styles.showButton}
-onPress={() => {
-void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-router.push("/show");
-}}
-accessibilityRole="button"
-accessibilityLabel="Show mode, full screen over the live camera"
->
-<Text style={styles.showButtonText}>Show someone</Text>
-</Pressable>
+{canDrag && <AuraDrag layers={draft.state.layers} selected={openLayer} onSelect={setOpenLayer} onChange={draft.setLayerConfig} />}
+<View pointerEvents="none" style={styles.dragHint}><Text style={styles.dragHintText}>{selectedIsGlobal ? "This effect fills the scene. Use its adjustments below." : canDrag ? "Drag to move · pinch with two fingers to resize" : "Add an effect or open ⋮ for examples"}</Text></View>
+
 </View>
 
 {notice ? (
@@ -210,8 +314,18 @@ accessibilityLabel={`${notice}. Tap to dismiss.`}
 </Pressable>
 ) : null}
 
+<Animated.View style={[styles.sheet,{height:sheetHeight}]}>
+<View {...sheetGesture.panHandlers}>
+<View style={styles.grabber}
+accessible accessibilityRole="adjustable" accessibilityLabel="Aura options panel. Swipe up for more controls, down for more preview."
+accessibilityActions={[{name:"increment",label:"Show more controls"},{name:"decrement",label:"Show more preview"}]}
+onAccessibilityAction={event => setSheetHeight(sheetGeometry.current.current+(event.nativeEvent.actionName === "increment" ? 80 : -80))}>
+<View style={styles.grabberBar} />
+<Text style={styles.grabberHint}>Drag to resize</Text>
+</View>
+
 <View style={styles.tabs}>
-{(["layers", "add", "presets", "background"] as Panel[]).map((p) => (
+{(["layers", "add", "background"] as Panel[]).map((p) => (
 <Pressable
 key={p}
 onPress={() => {
@@ -231,23 +345,26 @@ maxFontSizeMultiplier={2}
 </Text>
 </Pressable>
 ))}
+<Pressable style={styles.moreButton} onPress={()=>setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="Aura examples and saved configurations"><Ionicons name="ellipsis-vertical" size={22} color={colors.text} /></Pressable>
+</View>
+
 </View>
 
 <ScrollView style={styles.panel} contentContainerStyle={styles.panelContent}>
 {panel === "layers" ? (
 draft.state.layers.length === 0 ? (
 <Text style={styles.empty}>
-No layers yet. Start from a preset, or add one.
+No effects yet. Add one below, or open ⋮ for examples and saved configurations.
 </Text>
 ) : (
-draft.state.layers.map((layer, i) => {
+draft.state.layers.map((layer) => {
 const open=openLayer === layer.type;
 const specs=LAYER_FIELD_SPECS[layer.type];
 return (
 <View key={layer.type} style={styles.layerCard}>
 <Pressable
 style={styles.layerHeader}
-onPress={() => setOpenLayer(open ? null : layer.type)}
+onPress={() => { setOpenLayer(open ? null : layer.type); setAdvanced(false); }}
 accessibilityRole="button"
 accessibilityState={{ expanded: open }}
 accessibilityLabel={`${LAYER_LABELS[layer.type]}, ${
@@ -260,7 +377,7 @@ layer.visible ? "shown" : "hidden"
 <Text style={styles.layerChevron}>{open ? "Hide" : "Edit"}</Text>
 </Pressable>
 
-<View style={styles.layerActions}>
+{open ? <View style={styles.layerActions}>
 <SmallButton
 label={layer.visible ? "Shown" : "Hidden"}
 a11y={`${LAYER_LABELS[layer.type]}, ${
@@ -269,18 +386,8 @@ layer.visible ? "shown, tap to hide" : "hidden, tap to show"
 active={layer.visible}
 onPress={() => draft.toggleLayer(layer.type)}
 />
-<SmallButton
-label="Up"
-a11y={`Move ${LAYER_LABELS[layer.type]} down in the stack`}
-disabled={i === 0}
-onPress={() => draft.moveLayer(layer.type, -1)}
-/>
-<SmallButton
-label="Down"
-a11y={`Move ${LAYER_LABELS[layer.type]} up in the stack`}
-disabled={i === draft.state.layers.length - 1}
-onPress={() => draft.moveLayer(layer.type, 1)}
-/>
+{advanced && <SmallButton label="Send backward" a11y={`Send ${LAYER_LABELS[layer.type]} backward in the stack`} onPress={() => draft.moveLayer(layer.type, -1)} />}
+{advanced && <SmallButton label="Bring forward" a11y={`Bring ${LAYER_LABELS[layer.type]} forward in the stack`} onPress={() => draft.moveLayer(layer.type, 1)} />}
 <SmallButton
 label="Remove"
 a11y={`Remove ${LAYER_LABELS[layer.type]}`}
@@ -291,7 +398,7 @@ if(openLayer === layer.type) setOpenLayer(null);
 announce(`${LAYER_LABELS[layer.type]} removed`);
 }}
 />
-</View>
+</View> : null}
 
 {open ? (
 <View style={styles.layerFields}>
@@ -307,15 +414,20 @@ label: "Layer opacity",
 value={layer.opacity}
 onChange={(_f, v) => draft.setLayerOpacity(layer.type, v as number)}
 />
-{Object.entries(specs).map(([field, spec]) => (
+{layerAnchors(layer).length>0 && <Text style={styles.presetNote}>Drag the handle to move this effect. Pinch with two fingers to resize it.</Text>}
+{advanced && layerAnchors(layer).filter(anchor => anchor.list).map((anchor,index) => <View key={index}>
+{(["x","y"] as const).map(axis => <FieldControl key={axis} field={axis} spec={{kind:"number",min:0,max:1,default:0.5,label:`Shape ${index+1} ${axis === "x" ? "horizontal" : "vertical"} position`}} value={anchor[axis]} onChange={(_field,value) => draft.setLayerConfig(layer.type,movedConfig(layer,anchor,axis === "x" ? Number(value)-anchor.x : 0,axis === "y" ? Number(value)-anchor.y : 0))} />)}
+</View>)}
+{Object.entries(specs).filter(([field])=>!resizeFields(layer).includes(field)).filter(([field,spec]) => advanced || (spec.kind !== "list" && spec.kind !== "polylines" && !spec.hint?.includes("legacy") && !/(_x|_y|seed)$/.test(field))).filter((_entry,index) => advanced || index<5).map(([field, spec]) => (
 <FieldControl
 key={field}
 field={field}
-spec={spec}
+spec={spec.kind === "list" && canResize(layer) ? {...spec,of:Object.fromEntries(Object.entries(spec.of).filter(([key])=>key !== "size"))} : spec}
 value={(layer.config as unknown as Record<string, unknown>)[field]}
 onChange={(f, v) => draft.setLayerField(layer.type, f, v)}
 />
 ))}
+<Pressable style={styles.addRow} onPress={() => setAdvanced(value => !value)} accessibilityRole="button" accessibilityState={{expanded:advanced}}><Text style={styles.addRowText}>{advanced ? "Fewer adjustments" : "More adjustments"}</Text></Pressable>
 </View>
 ) : null}
 </View>
@@ -349,35 +461,6 @@ accessibilityLabel={`Add ${label}`}
 )
 ) : null}
 
-{panel === "presets" ? (
-<>
-<Text style={styles.presetNote}>
-Starting points, not descriptions of anyone in particular. Adjust
-anything.
-</Text>
-{AURA_PRESETS.map((p) => (
-<Pressable
-key={p.id}
-style={styles.presetCard}
-onPress={() => {
-draft.loadPreset(p.id);
-announce(`${p.name} loaded`);
-setPanel("layers");
-}}
-accessibilityRole="button"
-accessibilityLabel={`${p.name}. ${p.description}`}
->
-<Text style={styles.presetName} maxFontSizeMultiplier={2}>
-{p.name}
-</Text>
-<Text style={styles.presetDesc} maxFontSizeMultiplier={2}>
-{p.description}
-</Text>
-</Pressable>
-))}
-</>
-) : null}
-
 {panel === "background" ? (
 <>
 {(
@@ -404,6 +487,29 @@ accessibilityLabel={`${label}. ${hint}`}
 </Text>
 </Pressable>
 ))}
+{hasScenes() ? (
+<>
+<Text style={styles.presetNote}>
+Built in scenes. No camera or photo permission needed.
+</Text>
+{SCENES.map((scene) => (
+<Pressable
+key={scene.id}
+style={styles.addRow}
+onPress={() => void useScene(scene)}
+accessibilityRole="button"
+accessibilityLabel={`${scene.label}. ${scene.hint}`}
+>
+<Text style={styles.addRowText} maxFontSizeMultiplier={2}>
+{scene.label}
+</Text>
+<Text style={styles.addRowHint} maxFontSizeMultiplier={2}>
+{scene.hint}
+</Text>
+</Pressable>
+))}
+</>
+) : null}
 {caps && caps.compositeReadingLayers.length > 0 ? (
 <Text style={styles.presetNote}>
 {caps.compositeReadingLayers.length} layers transform the scene
@@ -417,42 +523,28 @@ background inside the renderer to work.
 <Text style={styles.disclaimer}>{AURA_DISCLAIMER}</Text>
 </ScrollView>
 
-<ScrollView
-horizontal
-showsHorizontalScrollIndicator={false}
-style={styles.navRow}
-contentContainerStyle={styles.navContent}
-accessibilityRole="tablist"
->
-{(
-[
-["Check in", "/checkin"],
-["Loosen", "/loosen"],
-["Insights", "/insights"],
-["Describe", "/describe"],
-["Versions", "/versions"],
-["Settings", "/settings"],
-] as const
-).map(([label, path]) => (
-<Pressable
-key={path}
-style={({ pressed }) => [styles.navChip, pressed && styles.navChipPressed]}
-onPress={() => router.push(path)}
-accessibilityRole="button"
-accessibilityLabel={label}
->
-<Text style={styles.navChipText} maxFontSizeMultiplier={1.8}>
-{label}
-</Text>
-</Pressable>
-))}
-</ScrollView>
-
 <View style={styles.footer}>
 {}
-<FooterButton label="Share image" onPress={share} disabled={busy} />
+<FooterButton label="Image" onPress={share} disabled={busy} />
+<FooterButton label="GIF" onPress={shareGif} disabled={busy} />
 <FooterButton label="Save" primary onPress={save} disabled={busy || !draft.dirty} />
 </View>
+</Animated.View>
+<Modal visible={menuOpen} transparent animationType="fade" onRequestClose={()=>setMenuOpen(false)}>
+<View style={styles.menuBackdrop}><Pressable style={StyleSheet.absoluteFill} onPress={()=>setMenuOpen(false)} accessibilityRole="button" accessibilityLabel="Close aura menu" />
+<View style={styles.menu} accessibilityViewIsModal>
+<View style={styles.menuHeading}><Text style={styles.presetName}>Your aura collection</Text><Pressable style={styles.moreButton} onPress={()=>setMenuOpen(false)} accessibilityRole="button" accessibilityLabel="Close"><Ionicons name="close" color={colors.text} size={22} /></Pressable></View>
+<ScrollView>
+<Pressable style={styles.addRow} onPress={()=>{setMenuOpen(false);router.push("/describe");}} accessibilityRole="button"><Text style={styles.addRowText}>Describe in words</Text><Text style={styles.addRowHint}>Describe what you see, or use a recording below.</Text></Pressable>
+<Text style={styles.menuLabel}>SAVED CONFIGURATIONS</Text>
+{versions.length ? versions.map(version=><Pressable key={version.id} style={styles.addRow} onPress={()=>{draft.load(version.state);sourceVersion.current=version;setOpenLayer(null);setMenuOpen(false);setPanel("layers");}} accessibilityRole="button"><Text style={styles.addRowText}>{version.name}</Text><Text style={styles.addRowHint}>{version.state.layers.length} effects{version.provenance ? " · drafted" : ""}</Text></Pressable>) : <Text style={styles.presetNote}>Save an aura and it will appear here.</Text>}
+<Text style={styles.menuLabel}>EXAMPLES TO TRY</Text>
+{AURA_PRESETS.map(example=><Pressable key={example.id} style={styles.addRow} onPress={()=>{sourceVersion.current=null;draft.loadPreset(example.id);setMenuOpen(false);setPanel("layers");setOpenLayer(null);}} accessibilityRole="button"><Text style={styles.addRowText}>{example.name}</Text><Text style={styles.addRowHint}>{example.description}</Text></Pressable>)}
+<Text style={styles.menuLabel}>FROM YOUR ATTACK RECORDINGS</Text>
+{recordedAttacks.length ? recordedAttacks.map(attack=><Pressable key={attack.id} style={styles.addRow} onPress={()=>{setMenuOpen(false);router.push({pathname:"/describe",params:{attackId:attack.id}});}} accessibilityRole="button"><Text style={styles.addRowText}>{new Date(attack.startedAt).toLocaleDateString(undefined,{month:"short",day:"numeric"})} · Create aura draft</Text><Text style={styles.addRowHint} numberOfLines={2}>{attack.note}</Text></Pressable>) : <Text style={styles.presetNote}>Record an attack to use your spoken description here.</Text>}
+</ScrollView>
+</View></View>
+</Modal>
 </View>
 );
 }
@@ -535,34 +627,19 @@ maxFontSizeMultiplier={1.8}
 }
 
 const styles=StyleSheet.create({
+moreButton:{minWidth:44,minHeight:56,alignItems:"center",justifyContent:"center"},
+menuBackdrop:{flex:1,backgroundColor:"rgba(0,0,0,.65)",justifyContent:"center",padding:20},
+menu:{maxHeight:"85%",backgroundColor:colors.surface,borderRadius:18,borderWidth:1,borderColor:colors.lineStrong,overflow:"hidden"},
+menuHeading:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",paddingLeft:16},
+menuLabel:{color:colors.accent,fontSize:11,letterSpacing:1,paddingHorizontal:16,paddingTop:20,paddingBottom:8},
+dragHint: { position: "absolute", top: 12, left: 16, right: 16, alignItems: "center" },
+dragHintText: { color: colors.textMuted, backgroundColor: "rgba(9,11,12,0.8)", padding: 8, borderRadius: 8, fontSize: 12 },
 root: { flex: 1, backgroundColor: colors.canvas },
-stage: { height: "42%", backgroundColor: colors.auraBackdrop },
-attackButton: {
-position: "absolute",
-left: space.lg,
-bottom: space.lg,
-minHeight: touch.min,
-justifyContent: "center",
-paddingHorizontal: space.lg,
-borderRadius: radius.pill,
-backgroundColor: "rgba(40,24,24,0.85)",
-borderWidth: 1,
-borderColor: colors.danger,
-},
-attackButtonText: { color: colors.danger, fontSize: typeScale.label },
-showButton: {
-position: "absolute",
-right: space.lg,
-bottom: space.lg,
-minHeight: touch.min,
-justifyContent: "center",
-paddingHorizontal: space.lg,
-borderRadius: radius.pill,
-backgroundColor: "rgba(20,20,26,0.82)",
-borderWidth: 1,
-borderColor: colors.lineStrong,
-},
-showButtonText: { color: colors.text, fontSize: typeScale.label },
+stage: { flex: 1, minHeight:0, backgroundColor: colors.auraBackdrop },
+sheet: { flexShrink:0, backgroundColor:colors.surface,borderTopLeftRadius:20,borderTopRightRadius:20,borderWidth:1,borderColor:colors.lineStrong,overflow:"hidden" },
+grabberHint: { color:colors.textFaint,fontSize:11 },
+grabber: { height: 44, gap:5, alignItems: "center", justifyContent: "center" },
+grabberBar: { width: 44, height: 4, borderRadius: 2, backgroundColor: colors.lineStrong },
 
 notice: {
 backgroundColor: colors.surfaceRaised,

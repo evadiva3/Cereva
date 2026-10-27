@@ -36,97 +36,97 @@ if(/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
 return s;
 }
 
-function toCsv(rows: Record<string, unknown>[]): string {
-  if (rows.length === 0) return "";
-  const columns=Object.keys(rows[0]!);
-  const lines=[columns.join(",")];
-  for (const row of rows) {
-    lines.push(columns.map((c) => csvCell(row[c])).join(","));
-  }
-  return lines.join("\n");
+function toCsv(rs: Record<string, unknown>[]): string {
+if(rs.length === 0) return "";
+const cs=Object.keys(rs[0]!);
+const ls=[cs.join(",")];
+for(const r of rs){
+ls.push(cs.map((c) => csvCell(r[c])).join(","));
+}
+return ls.join("\n");
 }
 
 export interface ExportResult {
-  uri: string;
-  counts: Record<string, number>;
+uri: string;
+counts: Record<string, number>;
 }
 
 function exportDirectory(): Directory {
-  const dir=new Directory(Paths.cache, "export");
-  if (dir.exists) dir.delete();
-  dir.create({ intermediates: true });
-  return dir;
+const d=new Directory(Paths.cache, "export");
+if(d.exists) d.delete();
+d.create({ intermediates: true });
+return d;
 }
 
 export async function exportJson(): Promise<ExportResult> {
-  const dir=exportDirectory();
-  const pl: Record<string, unknown>={
-    exportedAt: new Date().toISOString(),
-    app: "Scintilla",
-    note:
-      "Everything this app holds about you. Health data never left your " +
-      "phone; this file is the first time it has.",
-    tables: {},
-  };
-  const counts: Record<string, number>={};
-  const tables: Record<string, unknown>={};
+const d=exportDirectory();
+const pl: Record<string, unknown>={
+exportedAt: new Date().toISOString(),
+app: "Cereva",
+note:
+"Everything this app holds about you. Health data never left your " +
+"phone; this file is the first time it has.",
+tables: {},
+};
+const cn: Record<string, number>={};
+const ts: Record<string, unknown>={};
 
-  for (const table of TABLES) {
-    const rows=await dumpTable(table);
-    tables[table]=rows;
-    counts[table]=rows.length;
-  }
-  pl.tables=tables;
+for(const t of TABLES){
+const rs=await dumpTable(t);
+ts[t]=rs;
+cn[t]=rs.length;
+}
+pl.tables=ts;
 
-  const file=new File(dir, `scintilla-${today()}.json`);
-  file.create();
-  file.write(JSON.stringify(pl, null, 2));
-  return { uri: file.uri, counts };
+const f=new File(d, `cereva-${today()}.json`);
+f.create();
+f.write(JSON.stringify(pl, null, 2));
+return { uri: f.uri, counts: cn };
 }
 
 export async function exportCsv(): Promise<ExportResult & { uris: string[] }> {
-  const dir=exportDirectory();
-  const counts: Record<string, number>={};
-  const uris: string[]=[];
+const d=exportDirectory();
+const cn: Record<string, number>={};
+const us: string[]=[];
 
-  for (const table of TABLES) {
-    const rows=await dumpTable(table);
-    counts[table]=rows.length;
-    if (rows.length === 0) continue;
-    const file=new File(dir, `${table}.csv`);
-    file.create();
-    file.write(toCsv(rows));
-    uris.push(file.uri);
-  }
+for(const t of TABLES){
+const rs=await dumpTable(t);
+cn[t]=rs.length;
+if(rs.length === 0) continue;
+const f=new File(d, `${t}.csv`);
+f.create();
+f.write(toCsv(rs));
+us.push(f.uri);
+}
 
-  return { uri: uris[0] ?? dir.uri, counts, uris };
+return { uri: us[0] ?? d.uri, counts: cn, uris: us };
 }
 
 export async function shareExport(uri: string): Promise<void> {
-  if (!(await Sharing.isAvailableAsync())) {
-    throw new Error("Sharing is not available on this device.");
-  }
-  await Sharing.shareAsync(uri, { dialogTitle: "Your Scintilla data" });
+if(!(await Sharing.isAvailableAsync())){
+throw new Error("Sharing is not available on this device.");
+}
+await Sharing.shareAsync(uri, { dialogTitle: "Your Cereva data" });
 }
 
 export async function deleteEverything(): Promise<void> {
-  await deleteAllRows();
-  deleteAllAuraImages();
-  try {
-    const dir=new Directory(Paths.cache, "export");
-    if (dir.exists) dir.delete();
-  } catch {}
+await deleteAllRows();
+deleteAllAuraImages();
+try {
+const d=new Directory(Paths.cache, "export");
+if(d.exists) d.delete();
+} catch {}
 }
 
 export async function dataSummary(): Promise<Record<string, number>> {
-  const counts: Record<string, number>={};
-  for (const table of TABLES) {
-    assertKnownTable(table);
-    const db=await getDb();
-    const row=await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`);
-    counts[table]=row?.n ?? 0;
-  }
-  return counts;
+const cn: Record<string, number>={};
+for(const t of TABLES){
+assertKnownTable(t);
+const db=await getDb();
+const r=await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM ${t}`);
+cn[t]=r?.n ?? 0;
+}
+return cn;
 }
 
 export { TABLES };

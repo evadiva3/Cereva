@@ -1,6 +1,7 @@
 
 import { SimulatorEngine } from "./canvas/engine";
 import { CameraSource } from "./canvas/backgrounds/camera";
+import { captureGif } from "./gif";
 import { supportsCanvasFilter } from "./canvas/types";
 import {
 BRIDGE_VERSION,
@@ -33,7 +34,7 @@ const COMPOSITE_READING_LAYERS=[
 declare global {
 interface Window {
 ReactNativeWebView?: { postMessage(data: string): void };
-scintilla?: {
+cereva?: {
 send(message: unknown): void;
 engine: SimulatorEngine;
 };
@@ -166,6 +167,24 @@ postError("snapshot_failed", "could not read the canvas", msg.id, String(err));
 return;
 }
 
+case "requestGif": {
+const req=msg.body as Extract<HostMessage, { type: "requestGif" }>;
+const frames=Math.round(req.frames ?? 24);
+const fps=Math.round(req.fps ?? 12);
+const scale=req.scale ?? 0.5;
+void captureGif(canvas, { frames, fps, scale })
+.then((r) =>
+post(
+{ type: "gif", dataUrl: r.dataUrl, width: r.width, height: r.height, frames: r.frames },
+msg.id,
+),
+)
+.catch((err) =>
+postError("snapshot_failed", "could not record the gif", msg.id, String(err)),
+);
+return;
+}
+
 case "startCamera": {
 void camera.start().then((report) => post({ type: "camera", report }, msg.id));
 return;
@@ -211,7 +230,7 @@ postError("render_fault", "handler threw", parsed.value.id, String(err));
 document.addEventListener("message", (e) => receive((e as MessageEvent).data));
 window.addEventListener("message", (e) => receive((e as MessageEvent).data));
 
-window.scintilla={ send: receive, engine };
+window.cereva={ send: receive, engine };
 
 engine.start();
 
@@ -224,6 +243,8 @@ layers: Object.keys(LAYER_FIELD_SPECS),
 webgl2: detectWebgl2(),
 canvasFilter: supportsCanvasFilter(),
 compositeReadingLayers: COMPOSITE_READING_LAYERS,
+secureContext: typeof window !== "undefined" && window.isSecureContext === true,
+origin: typeof location !== "undefined" ? location.origin : "",
 },
 });
 }

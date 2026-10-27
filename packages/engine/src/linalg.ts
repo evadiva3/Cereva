@@ -10,12 +10,6 @@ export function zeroMatrix(rows: number, cols: number): Matrix {
 return Array.from({ length: rows }, () => new Array(cols).fill(0));
 }
 
-export function identity(n: number, scale = 1): Matrix {
-const m=zeroMatrix(n, n);
-for(let i = 0; i < n; i++) m[i]![i] = scale;
-return m;
-}
-
 export function cholesky(a: Matrix): Matrix | null {
 const n=a.length;
 const l=zeroMatrix(n, n);
@@ -80,8 +74,4 @@ return total;
 
 export function submatrix(a: Matrix, indices: number[]): Matrix {
 return indices.map((i) => indices.map((j) => a[i]![j]!));
-}
-
-export function subvector(v: Vector, indices: number[]): Vector {
-return indices.map((i) => v[i]!);
 }

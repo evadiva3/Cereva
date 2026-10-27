@@ -51,32 +51,3 @@ estimatedDaysRemaining=Math.ceil((onsets.need - onsets.have) / perDay);
 
 return { loggedDays, onsets, blocking, estimatedDaysRemaining, reporting };
 }
-
-export function describeProgress(progressState: EngineProgress): string {
-if(progressState.reporting) return "";
-
-if(progressState.blocking === "logged_days"){
-const { have, need }=progressState.loggedDays;
-const base=`${have} of the ${need} logged days needed before any factor can be looked at.`;
-if(progressState.estimatedDaysRemaining !== null){
-return `${base} At your current rate that is roughly ${progressState.estimatedDaysRemaining} more days.`;
-}
-return base;
-}
-
-if(progressState.blocking === "onsets"){
-const { have, need }=progressState.onsets;
-const base =
-`${have} of the ${need} attack starts needed. ` +
-"This one is not about logging more: it depends on how often attacks happen.";
-if(progressState.estimatedDaysRemaining !== null){
-return `${base} At your current rate, roughly ${progressState.estimatedDaysRemaining} more days.`;
-}
-return base;
-}
-
-return (
-"There is enough history overall, but no single factor has enough days " +
-"on both sides of it yet to be worth testing."
-);
-}

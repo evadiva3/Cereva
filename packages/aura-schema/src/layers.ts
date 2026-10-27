@@ -100,6 +100,7 @@ export interface FortificationSpectraConfig extends ColorModeFields {
 origin_x: number;
 origin_y: number;
 expansion_rate: number;
+radius_scale:number;
 arc_angle_degrees: number;
 zigzag_amplitude: number;
 zigzag_frequency: number;
@@ -389,14 +390,14 @@ scotomas: [
 x: 0.6,
 y: 0.4,
 size: 0.1,
-shape: "circular",
+shape: "irregular",
 opacity: 0.7,
 edge_softness: 0.5,
 seed: 1,
 },
 ],
 fill_color: "#12080e",
-border_color: "#2a1535",
+border_color: "#12080e",
 edge_softness_px: 45.0,
 seamless: false,
 color_mode: "fixed",
@@ -424,6 +425,7 @@ fortification_spectra: {
 origin_x: 0.5,
 origin_y: 0.5,
 expansion_rate: 2.0,
+radius_scale:1,
 arc_angle_degrees: 120,
 zigzag_amplitude: 14,
 zigzag_frequency: 6,
@@ -462,12 +464,12 @@ color_mode: "fixed",
 rainbow_cycle_speed: 1.0,
 },
 eye_floaters: {
-variant: "opaque",
+variant: "translucent",
 count: 6,
 drift_speed: 0.3,
 drift_pattern: "gravity",
 size_variance: 0.5,
-color: "#2a2a2a",
+color: "#4a4a4a",
 custom_shapes: [],
 use_custom_shapes: false,
 },

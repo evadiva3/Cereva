@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -9,6 +9,8 @@ import { isAiConfigured } from "@/ai/client";
 import { dataSummary, deleteEverything, exportCsv, exportJson, shareExport } from "@/export";
 import { describeHealthStatus, isHealthAvailable, requestHealthAccess } from "@/health/healthkit";
 import { syncWeather } from "@/weather/openMeteo";
+import { getName, setName } from "@/db/profile";
+import { seedChronic } from "@/dev/seed";
 import { SAFETY_NOTE, colors, radius, space, touch, type as typeScale } from "@/theme";
 
 export default function SettingsScreen(){
@@ -17,9 +19,11 @@ const [counts, setCounts]=useState<Record<string, number> | null>(null);
 const [healthAvailable, setHealthAvailable]=useState<boolean | null>(null);
 const [busy, setBusy]=useState<string | null>(null);
 const [notice, setNotice]=useState<string | null>(null);
+const [name, setNameState]=useState("");
 
 const reload=useCallback(() => {
 getAiConsent().then(setConsent).catch(() => setConsent(null));
+getName().then((n) => setNameState(n ?? "")).catch(() => {});
 dataSummary().then(setCounts).catch(() => setCounts(null));
 isHealthAvailable().then(setHealthAvailable).catch(() => setHealthAvailable(false));
 }, []);
@@ -85,6 +89,34 @@ setBusy(null);
 );
 }, [counts, reload]);
 
+const seedDemo=useCallback(() => {
+Alert.alert(
+"Load demo data",
+"This replaces every day log and attack with 180 days of invented chronic migraine data, so Insights has something to show. Your real entries will be gone.",
+[
+{ text: "Cancel", style: "cancel" },
+{
+text: "Replace with demo data",
+style: "destructive",
+onPress: () => {
+void (async () => {
+setBusy("seed");
+try {
+const r=await seedChronic(180);
+setNotice(`Loaded ${r.days} days, ${r.attacks} attack days, ${r.worsenings} days it got worse.`);
+reload();
+}catch(err){
+setNotice(`Could not load demo data: ${(err as Error).message}`);
+}finally {
+setBusy(null);
+}
+})();
+},
+},
+],
+);
+}, [reload]);
+
 const totalRows=counts ? Object.values(counts).reduce((a, b) => a + b, 0) : null;
 
 return (
@@ -112,12 +144,27 @@ accessibilityLabel={`${notice}. Tap to dismiss.`}
 ) : null}
 
 <Text style={styles.sectionHeading} maxFontSizeMultiplier={2}>
+Your name
+</Text>
+<TextInput
+style={styles.nameInput}
+value={name}
+onChangeText={setNameState}
+onBlur={() => { void setName(name); }}
+placeholder="What should Cereva call you?"
+placeholderTextColor={colors.textFaint}
+maxLength={40}
+returnKeyType="done"
+accessibilityLabel="Your name, used in the greeting on the home screen"
+/>
+
+<Text style={styles.sectionHeading} maxFontSizeMultiplier={2}>
 Describing your aura in words
 </Text>
 <View style={styles.row}>
 <View style={styles.rowLabels}>
 <Text style={styles.rowLabel} maxFontSizeMultiplier={2}>
-Send descriptions to the AI server
+Send descriptions to the drafting server
 </Text>
 <Text style={styles.rowHint} maxFontSizeMultiplier={2}>
 {consent?.granted
@@ -134,7 +181,7 @@ Turned on {new Date(consent.grantedAt).toLocaleDateString()}.
 value={!!consent?.granted}
 onValueChange={toggleConsent}
 disabled={!isAiConfigured() && !consent?.granted}
-accessibilityLabel="Send aura descriptions to the AI server"
+accessibilityLabel="Send aura descriptions to the drafting server"
 trackColor={{ false: colors.line, true: colors.accentDim }}
 thumbColor={consent?.granted ? colors.accent : colors.textFaint}
 ios_backgroundColor={colors.line}
@@ -225,8 +272,8 @@ Delete everything
 What this app is
 </Text>
 <Text style={styles.body} maxFontSizeMultiplier={2}>
-Scintilla records what you tell it and looks for patterns in it. It does
-not diagnose, treat, predict, or prevent migraine. Loosen is relaxation
+Cereva records what you tell it and looks for patterns in it. It does
+not diagnose, treat, predict, or prevent migraine. Relaxation offers relaxation
 training. Anything the insights screen reports is an association in your
 own diary, not a cause.
 </Text>
@@ -241,6 +288,20 @@ accessibilityLabel="Open insights"
 Insights
 </Text>
 </Pressable>
+{__DEV__ ? (
+<>
+<Text style={styles.sectionHeading} maxFontSizeMultiplier={2}>
+Demo, development builds only
+</Text>
+<ActionRow
+label="Load 180 days of chronic migraine"
+hint="Invented data with short sleep and pressure drops built in, so Insights has something to report. Replaces everything."
+actionLabel={busy === "seed" ? "Working" : "Load"}
+disabled={busy !== null}
+onPress={seedDemo}
+/>
+</>
+) : null}
 </ScrollView>
 );
 }
@@ -316,6 +377,14 @@ justifyContent: "center",
 noticeText: { color: colors.text, fontSize: typeScale.label },
 
 sectionHeading: { color: colors.textMuted, fontSize: typeScale.label, marginTop: space.lg },
+nameInput: {
+minHeight: touch.comfortable,
+paddingHorizontal: space.lg,
+borderRadius: radius.md,
+backgroundColor: colors.surface,
+color: colors.text,
+fontSize: typeScale.body,
+},
 body: { color: colors.textMuted, fontSize: typeScale.caption, lineHeight: 20 },
 
 row: {
